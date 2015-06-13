@@ -24,3 +24,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+*.bk
+
+npg.sublime-project
+npg.sublime-workspace

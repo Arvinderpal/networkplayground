@@ -6,6 +6,10 @@ if [[ ! -e /usr/bin/curl ]]; then
   apt-get -yqq install curl
 fi
 
+#########################
+# etcd install and setup
+#########################
+
 if [[ ! -e /usr/local/bin/etcd ]]; then
   # Get etcd download
   curl -sL  https://github.com/coreos/etcd/releases/download/v2.0.9/etcd-v2.0.9-linux-amd64.tar.gz -o etcd-v2.0.9-linux-amd64.tar.gz
@@ -54,9 +58,9 @@ if [[ ! -e /usr/bin/lxd ]]; then
     sudo apt-get -y install lxd
 fi
 
-
 #################
 # Misc Packages
 #################
 apt-get update
 apt-get install -q -y iperf netperf 
+
