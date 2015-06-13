@@ -4,13 +4,22 @@
   ram: 512
   vcpu: 1
   priv_ip: 192.168.70.201
+  netns_ip: 10.0.0.1/24
+  remote1: 192.168.70.202
+  remote2: 192.168.70.203
 - name: etcd-02
   box: slowe/ubuntu-1404-x64-ovs
   ram: 512
   vcpu: 1
   priv_ip: 192.168.70.202
+  netns_ip: 10.0.0.2/24
+  remote1: 192.168.70.201
+  remote2: 192.168.70.203
 - name: etcd-03
   box: slowe/ubuntu-1404-x64-ovs
   ram: 512
   vcpu: 1
   priv_ip: 192.168.70.203
+  netns_ip: 10.0.0.3/24
+  remote1: 192.168.70.201
+  remote2: 192.168.70.202

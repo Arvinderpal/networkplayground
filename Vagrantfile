@@ -35,7 +35,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # Always use Vagrant's default insecure key
   config.ssh.insert_key = false
-
+  
   # Iterate through entries in YAML file to create VMs
   servers.each do |servers|
     config.vm.define servers["name"] do |srv|
@@ -43,15 +43,22 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       srv.vm.box_check_update = false
       srv.vm.hostname = servers["name"]
       srv.vm.box = servers["box"]
+      
       # Assign an additional static private network
       srv.vm.network "private_network", ip: servers["priv_ip"]
+      
       # Specify default synced folder; requires VMware Tools
       # Note shared folders are REQUIRED for the shell provisioning to work
       srv.vm.synced_folder ".", "/vagrant"
+      
       # Provision etcd to the VMs
       srv.vm.provision "shell", path: "provision.sh", privileged: true
+      # Provision virtual network
+
+      srv.vm.provision "shell", path: "./netscripts/multihost_single_subnet.sh", args: [servers["netns_ip"], servers["remote1"], servers["remote2"]], privileged: true
+      
       # Configure VMs with RAM and CPUs per settings in servers.yml
-      srv.vm.provider :vmware_fusion do |vmw|
+      srv.vm.provider :vmware_workstation do |vmw|
         vmw.vmx["memsize"] = servers["ram"]
         vmw.vmx["numvcpus"] = servers["vcpu"]
       end
