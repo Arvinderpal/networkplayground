@@ -55,7 +55,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       srv.vm.provision "shell", path: "provision.sh", privileged: true
       # Provision virtual network
 
-      srv.vm.provision "shell", path: "./netscripts/multihost_single_subnet.sh", args: [servers["netns_ip"], servers["remote1"], servers["remote2"]], privileged: true
+      #############
+      # SCRIPTS
+      #############
+      #srv.vm.provision "shell", path: "./netscripts/multihost_single_subnet.sh", args: [servers["netns1_ip"], servers["remote1"], servers["remote2"]], privileged: true
+      srv.vm.provision "shell", path: "./netscripts/multihost_dual_subnet.sh", args: [servers["netns1_ip"], servers["netns2_ip"],  servers["remote1"], servers["remote2"]], privileged: true
       
       # Configure VMs with RAM and CPUs per settings in servers.yml
       srv.vm.provider :vmware_workstation do |vmw|
