@@ -9,6 +9,12 @@ TUN_IF2="greiface2_"$REMOTE2
 OVS_BRIDGE=ovs-test
 TUN_TYPE='gre'
 
+VLAN_1="10"
+VLAN_2="20"
+
+VID_1="100"
+VID_2="200"
+
 echo $NETNS_IP1
 echo $NETNS_IP2
 echo $REMOTE1

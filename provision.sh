@@ -61,6 +61,6 @@ fi
 #################
 # Misc Packages
 #################
-apt-get update
 apt-get install -q -y iperf netperf 
-
+apt-get install -q -y openvswitch-switch openvswitch-ipsec
+apt-get install -q -y ipsec-tools racoon

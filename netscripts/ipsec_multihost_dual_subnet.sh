@@ -1,13 +1,18 @@
 #!/bin/bash
 
+
+cd /vagrant/openvswitch
+dpkg -i openvswitch-common_2.4.0-1_amd64.deb openvswitch-switch_2.4.0-1_amd64.deb python-openvswitch_2.4.0-1_all.deb openvswitch-ipsec_2.4.0-1_amd64.deb
+
 NETNS_IP1=$1
 NETNS_IP2=$2
 REMOTE1=$3
 REMOTE2=$4
-TUN_IF1="greiface1_"$REMOTE1
-TUN_IF2="greiface2_"$REMOTE2
+TUN_IF1="greipseciface1_"$REMOTE1
+TUN_IF2="greipseciface2_"$REMOTE2
 OVS_BRIDGE=ovs-test
-TUN_TYPE='gre'
+TUN_TYPE="ipsec_gre"
+PSK="thisisnotagoodpsk"
 
 echo $NETNS_IP1
 echo $NETNS_IP2
@@ -30,6 +35,8 @@ ip link add tap1 type veth peer name ovs-tap1
 ovs-vsctl add-port $OVS_BRIDGE ovs-tap1 
 # attach the other side to namespace
 ip link set tap1 netns ns1
+# Decrease MTU to include GRE+IP headers
+ip netns exec ns1 ip link set dev tap1 mtu 1300
 # set the ports to up
 ip netns exec ns1 ip link set dev tap1 up
 ip link set dev ovs-tap1 up
@@ -45,6 +52,8 @@ ip link add tap2 type veth peer name ovs-tap2
 ovs-vsctl add-port $OVS_BRIDGE ovs-tap2
 # attach the other side to namespace
 ip link set tap2 netns ns2
+# Decrease MTU to include GRE+IP headers
+ip netns exec ns2 ip link set dev tap2 mtu 1300
 # set the ports to up
 ip netns exec ns2 ip link set dev tap2 up
 ip link set dev ovs-tap2 up
@@ -52,6 +61,8 @@ ip link set dev ovs-tap2 up
 ip netns exec ns2 ip addr add dev tap2 $NETNS_IP2
 
 
+# ovs-vsctl add-port $OVS_BRIDGE $TUN_IF -- set interface $TUN_IF type=$TUN_TYPE options:remote_ip=$REMOTE_IP options:psk=thisisnotagoodpsk
+
 # Create tunnels to remote nodes
-ovs-vsctl add-port $OVS_BRIDGE $TUN_IF1 -- set interface $TUN_IF1 type=gre options:remote_ip=$REMOTE1
-ovs-vsctl add-port $OVS_BRIDGE $TUN_IF2 -- set interface $TUN_IF2 type=gre options:remote_ip=$REMOTE2
+ovs-vsctl add-port $OVS_BRIDGE $TUN_IF1 -- set interface $TUN_IF1 type=$TUN_TYPE options:remote_ip=$REMOTE1 options:psk=$PSK
+ovs-vsctl add-port $OVS_BRIDGE $TUN_IF2 -- set interface $TUN_IF2 type=$TUN_TYPE options:remote_ip=$REMOTE2 options:psk=$PSK 
