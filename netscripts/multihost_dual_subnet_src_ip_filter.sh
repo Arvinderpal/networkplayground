@@ -65,8 +65,8 @@ ovs-vsctl add-port $OVS_BRIDGE $TUN_IF2 -- set interface $TUN_IF2 type=gre optio
 
 # Allow ARP messages
 ovs-ofctl add-flow $OVS_BRIDGE priority=200,arp,actions=normal
-ovs-ofctl add-flow ovs-test priority=200,arp,in_port=$NETNS1_PORT,nw_dst=$NETNS1_IP,actions=normal
-ovs-ofctl add-flow ovs-test priority=200,arp,in_port=$NETNS2_PORT,nw_dst=$NETNS2_IP,actions=normal
+# ovs-ofctl add-flow $OVS_BRIDGE priority=200,arp,in_port=$NETNS1_PORT,nw_dst=$NETNS1_IP,actions=normal
+# ovs-ofctl add-flow $OVS_BRIDGE priority=200,arp,in_port=$NETNS2_PORT,nw_dst=$NETNS2_IP,actions=normal
 # ovs-ofctl add-flow ovs-test arp,in_port=5,nw_dst=10.0.2.1/24,actions=normal
 
 # Allow STP/BPDU packets

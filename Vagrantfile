@@ -11,7 +11,7 @@ require 'yaml'
 
 # Read YAML file with VM details (box, CPU, RAM, IP addresses)
 # Be sure to edit servers.yml to provide correct IP addresses
-servers = YAML.load_file('servers.yml')
+servers = YAML.load_file('servers_k8.yml')
 
 # Require 'erb' module
 require 'erb'
@@ -58,9 +58,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       #############
       # SCRIPTS
       #############
-      #srv.vm.provision "shell", path: "./netscripts/multihost_single_subnet.sh", args: [servers["netns1_ip"], servers["remote1"], servers["remote2"]], privileged: true
+      #srv.vm.provision "shell", path: "./netscripts/multihost_single_subnet_vxlan.sh", args: [servers["netns1_ip"], servers["remote1"], servers["remote2"]], privileged: true
       
-      srv.vm.provision "shell", path: "./netscripts/multihost_dual_subnet_src_ip_filter.sh", args: [servers["netns1_ip"], servers["netns2_ip"],  servers["remote1"], servers["remote2"]], privileged: true
+      srv.vm.provision "shell", path: "./netscripts/multihost_dual_subnet_vxlan_vnid_isolation.sh", args: [servers["pod1_ip"], servers["pod2_ip"],  servers["remotetun1_ip"], servers["remotetun2_ip"], servers["remote1"], servers["remote2"]], privileged: true
 
       #srv.vm.provision "shell", path: "./netscripts/ipsec_multihost_dual_subnet.sh", args: [servers["netns1_ip"], servers["netns2_ip"],  servers["remote1"], servers["remote2"]], privileged: true
       

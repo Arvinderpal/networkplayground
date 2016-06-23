@@ -1,0 +1,36 @@
+---
+- name: etcd-01
+  box: slowe/ubuntu-trusty-x64
+  ram: 512
+  vcpu: 1
+  priv_ip: 192.168.70.201
+  pod1_ip: 10.0.1.1
+  pod2_ip: 10.0.1.2
+  remotetun1_ip: 10.0.2.0/24
+  remotetun2_ip: 10.0.3.0/24
+  remote1: 192.168.70.202
+  remote2: 192.168.70.203
+- name: etcd-02
+  box: slowe/ubuntu-trusty-x64
+  ram: 512
+  vcpu: 1
+  priv_ip: 192.168.70.202
+  pod1_ip: 10.0.2.1
+  pod2_ip: 10.0.2.2
+  remotetun1_ip: 10.0.1.0/24
+  remotetun2_ip: 10.0.3.0/24
+  remote1: 192.168.70.201
+  remote2: 192.168.70.203
+- name: etcd-03
+  box: slowe/ubuntu-trusty-x64
+  ram: 512
+  vcpu: 1
+  priv_ip: 192.168.70.203
+  pod1_ip: 10.0.3.1
+  pod2_ip: 10.0.3.2
+  remotetun1_ip: 10.0.1.0/24
+  remotetun2_ip: 10.0.2.0/24
+  remote1: 192.168.70.201
+  remote2: 192.168.70.202
+
+  #   box: slowe/ubuntu-1404-x64-ovs
