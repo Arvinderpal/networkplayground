@@ -28,7 +28,8 @@ echo $REMOTE2
 
 
 # create the switch
-ovs-vsctl add-br $OVS_BRIDGE
+# fail-mode=secure won't put the default "normal" rule in table-0
+ovs-vsctl --may-exist add-br $OVS_BRIDGE -- set Bridge $OVS_BRIDGE fail-mode=secure
 
 #
 #### Network 100 
