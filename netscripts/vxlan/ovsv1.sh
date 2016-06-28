@@ -51,9 +51,35 @@ add_flows(){
 	# TBD
 }
 
+
+del_flows(){
+
+	########################
+	# 15. VNI Tag in REG0 (Table 15)
+	########################
+	#  could also delete based on port: in_port=${POD_PORT}
+	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_INGRESS_LOCAL},ip,nw_src=${POD_IP}"
+	# ARP
+	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_INGRESS_LOCAL},arp,nw_src=${POD_IP}"
+
+	########################
+	# Table 50: Egress to Local Pods
+	########################
+	# 	i. Allow traffic to same VNI
+	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_EGRESS_LOCAL},ip,nw_dst=${POD_IP}"
+	# ARP
+	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_EGRESS_LOCAL},arp,nw_dst=${POD_IP}"
+
+	# Allow traffic to other VNIs if policy allows
+	# TBD
+}
+
 case "$CMD" in
 	add)
 		add_flows
+		;;
+	del)
+		del_flows
 		;;
 	*)
 		echo "Invalid cmd: $@"

@@ -33,5 +33,8 @@ ip link set dev $extveth up
 ip netns exec $NAME ip addr add dev $intveth "${POD_IP}/16"
 # we need /16 because a pod on 10.0.1.* may talk to a pod on 10.0.2.* node
 
+# the default route 
+ip route add add default dev $intveth
+
 # let's setup all the flow rules
 $CMD_PATH/ovsv1.sh $CMD $NAME $POD_IP $POD_PORT $VNID $HOSTSUBNET
