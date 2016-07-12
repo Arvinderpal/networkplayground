@@ -52,15 +52,24 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       srv.vm.synced_folder ".", "/vagrant"
       
       # Provision etcd to the VMs
-      srv.vm.provision "shell", path: "provision.sh", privileged: true
-      # Provision virtual network
+      srv.vm.provision "bootstrap", type:"shell", path: "provision.sh", privileged: true
+    
 
       #############
       # SCRIPTS
       #############
-      srv.vm.provision "shell", path: "./netscripts/vxlan/setup.sh", args: [servers["clustersubnet"], servers["host_subnet"],  servers["remote1_subnet"], servers["remote2_subnet"], servers["remote1"], servers["remote2"]], privileged: true
-      srv.vm.provision "shell", path: "./netscripts/vxlan/simplenetwork.sh", args: [servers["pod_ip_prefix"], servers["host_subnet"]], privileged: true
+      # NOTE: we have 2 scripts: setup and simple-network, both of these should
+      # be run after the above "bootstrap" has been run and vms rebooted.
+      # v up --provision-with bootstrap
+      # v reload --provision-with networksetup,simplenetwork
 
+      srv.vm.provision "networksetup", type:"shell", path: "./netscripts/vxlan/setup.sh", args: [servers["clustersubnet"], servers["host_subnet"],  servers["remote1_subnet"], servers["remote2_subnet"], servers["remote1"], servers["remote2"]], privileged: true
+      
+      srv.vm.provision "simplenetwork", type:"shell", path: "./netscripts/vxlan/simplenetwork.sh", args: [servers["pod_ip_prefix"], servers["host_subnet"], servers["priv_ip"]], privileged: true
+
+
+
+      # OLD STUFF #
 
       #srv.vm.provision "shell", path: "./netscripts/multihost_single_subnet_vxlan.sh", args: [servers["netns1_ip"], servers["remote1"], servers["remote2"]], privileged: true
       

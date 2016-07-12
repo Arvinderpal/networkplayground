@@ -51,7 +51,7 @@ if [[ ! -e /etc/apt/sources.list.d/ubuntu-lxc-lxd-stable-trusty.list ]]; then
 fi
 
 # Update package list
-# sudo apt-get update
+sudo apt-get update
 
 # Install LXC/LXD if not already installed
 # if [[ ! -e /usr/bin/lxd ]]; then
@@ -65,4 +65,6 @@ fi
 # apt-get install -q -y ipsec-tools racoon
 
 # apt-get install -q -y openvswitch-switch openvswitch-ipsec
-dpkg -i /vagrant/openvswitch/openvswitch-common_2.4.0-1_amd64.deb /vagrant/openvswitch/openvswitch-switch_2.4.0-1_amd64.deb
+dpkg -i /vagrant/openvswitch/2.5.90/openvswitch-common_2.5.90-1_amd64.deb /vagrant/openvswitch/2.5.90/openvswitch-switch_2.5.90-1_amd64.deb
+apt-get install -q -y dkms
+dpkg -i /vagrant/openvswitch/2.5.90/openvswitch-datapath-dkms_2.5.90-1_all.deb

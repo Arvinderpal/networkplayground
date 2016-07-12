@@ -23,7 +23,7 @@ EXTERNAL_PORT="2"
 ovs-vsctl --may-exist add-br $OVS_BRIDGE -- set Bridge $OVS_BRIDGE fail-mode=secure
 
 # Create tunnel 
-ovs-vsctl add-port $OVS_BRIDGE vxlan0 -- set interface vxlan0 \
+ovs-vsctl --may-exist add-port $OVS_BRIDGE vxlan0 -- set interface vxlan0 \
 	ofport_request=$TUN_PORT \
 	type=vxlan \
 	options:remote_ip=flow options:key=flow
