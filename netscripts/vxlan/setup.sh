@@ -60,16 +60,20 @@ cat /proc/sys/net/ipv4/ip_forward
 
 # TABLES
 TABLE_CLASSIFY="0"
+TABLE_ARP_RESPONDER="5"
 TABLE_INGRESS_TUN="10"
+TABLE_INGRESS_EXTERNAL_PORT="12"
 TABLE_INGRESS_CSG="13"
-TABLE_INGRESS_LOCAL="15"
+TABLE_INGRESS_LOCAL_PORT="14"
+TABLE_INGRESS_HOST_POD="15"
 TABLE_ACL="17"
 TABLE_NAT="20"
 TABLE_ROUTER="40"
-TABLE_EGRESS_LOCAL="50"
+TABLE_EGRESS_LOCAL_POD="50"
 TABLE_EGRESS_TUN="55"
-TABLE_EGRESS_EXT="58"
-TABLE_ARP_RESPONDER="5"
+TABLE_EGRESS_EXTERNAL_PORT="58"
+TABLE_EGRESS_LOCAL_PORT="60"
+
 
 ########################
 # Table 0: Classify
@@ -88,14 +92,15 @@ ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	"table=${TABLE_CLASSIFY},priority=100,arp,in_port=${CLUSTERSUBNETGW_PORT},actions=goto_table:${TABLE_ARP_RESPONDER}"
 
+# Traffic from local linux stack
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-	"table=${TABLE_CLASSIFY},priority=1,actions=goto_table:${TABLE_INGRESS_LOCAL}"
-# For now, traffic from local linux stack is sent out eth1
+	"table=${TABLE_CLASSIFY},in_port=LOCAL,actions=goto_table:${TABLE_INGRESS_LOCAL_PORT}"
+# Traffic from eth1 
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-	"table=${TABLE_CLASSIFY},in_port=LOCAL,actions=${EXTERNAL_PORT}"
-# For now, traffic from eth1 is sent out local linux stack 
+	"table=${TABLE_CLASSIFY},in_port=${EXTERNAL_PORT},actions=goto_table:${TABLE_INGRESS_EXTERNAL_PORT}"
+
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-	"table=${TABLE_CLASSIFY},in_port=${EXTERNAL_PORT},actions=LOCAL"
+	"table=${TABLE_CLASSIFY},priority=1,actions=goto_table:${TABLE_INGRESS_HOST_POD}"
 
 ########################
 # Table 5: TABLE_ARP_RESPONDER
@@ -104,14 +109,33 @@ ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	"table=${TABLE_ARP_RESPONDER},priority=1,arp,actions=goto_table:${TABLE_ROUTER}"
 
 ########################
-# Table 10: Ingress from Tunnel
-# flows added during pod add/del
+# Table 12: Ingress from ovs External Port
 ########################
+# FLOATING_IP="172.16.60.235"
+# FLOATING_IP="10.1.1.235"
+FLOATING_IP="192.168.70.201"
+TPORT="34567"
+# Track all traffic from external port, reverse nat tracked connections
+ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	"table=${TABLE_INGRESS_EXTERNAL_PORT},priority=100,icmp,actions=ct(zone=1,nat),LOCAL"
+# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+# 	"table=${TABLE_INGRESS_EXTERNAL_PORT},priority=100,icmp,ct_state=+trk+rel,ct_mark=1,ct_zone=1,actions=goto_table:${TABLE_ROUTER}"
+
+# all other traffic goes to LOCAL
+ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	"table=${TABLE_INGRESS_EXTERNAL_PORT},priority=1,actions=LOCAL"
+
 
 ########################
-# Table 15: VNI Tag in REG0 
-# flows added during pod add/del
+# Table 14: Ingress from ovs LOCAL Port
 ########################
+# SNAT traffic from cluster pods and send to EXTERNAL port
+ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	"table=${TABLE_INGRESS_LOCAL_PORT},priority=100,icmp,nw_src=${CLUSTER_SUBNET},actions=ct(commit,zone=1,nat(src=${FLOATING_IP}),exec(set_field:1->ct_mark)),${EXTERNAL_PORT}"
+
+# all other traffic goes to external port 
+ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	"table=${TABLE_INGRESS_LOCAL_PORT},priority=1,actions=${EXTERNAL_PORT}"
 
 ########################
 # Table 17: ACL
@@ -136,14 +160,18 @@ ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 # Track all IP traffic, NAT existing connections.
 
 # FLOATING_IP="172.16.60.235"
-FLOATING_IP="10.1.1.235"
-TPORT="34567"
+# FLOATING_IP="10.1.1.235"
+# TPORT="34567"
+# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+# 	"table=${TABLE_ACL},priority=200,icmp,in_port=${CLUSTERSUBNETGW_PORT},nw_dst=10.1.1.235,actions=ct(table=${TABLE_CLASSIFY},zone=1,nat)"
+# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+# 	"table=${TABLE_ACL},priority=200,icmp,in_port=${CLUSTERSUBNETGW_PORT},ct_state=+trk+rel,ct_mark=1,ct_zone=1,actions=goto_table:${TABLE_ROUTER}"
+# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+# 	"table=${TABLE_ACL},priority=50,actions=goto_table:${TABLE_NAT}"
+
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-	"table=${TABLE_ACL},priority=200,icmp,in_port=${CLUSTERSUBNETGW_PORT},nw_dst=10.1.1.235,actions=ct(table=${TABLE_CLASSIFY},zone=1,nat)"
-ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-	"table=${TABLE_ACL},priority=200,icmp,in_port=${CLUSTERSUBNETGW_PORT},ct_state=+trk+rel,ct_mark=1,ct_zone=1,actions=goto_table:${TABLE_ROUTER}"
-ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-	"table=${TABLE_ACL},priority=50,actions=goto_table:${TABLE_NAT}"
+	"table=${TABLE_ACL},priority=50,actions=goto_table:${TABLE_ROUTER}"
+
 
 # Drop all external traffic:
 # ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
@@ -195,9 +223,9 @@ ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 
 # To local pod:
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-	"table=${TABLE_ROUTER},priority=100,ip,nw_dst=${HOST_SUBNET},actions=goto_table:${TABLE_EGRESS_LOCAL}"
+	"table=${TABLE_ROUTER},priority=100,ip,nw_dst=${HOST_SUBNET},actions=goto_table:${TABLE_EGRESS_LOCAL_POD}"
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-	"table=${TABLE_ROUTER},priority=100,arp,nw_dst=${HOST_SUBNET},actions=goto_table:${TABLE_EGRESS_LOCAL}"
+	"table=${TABLE_ROUTER},priority=100,arp,nw_dst=${HOST_SUBNET},actions=goto_table:${TABLE_EGRESS_LOCAL_POD}"
 # To remote pod [another cluster node]:
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	"table=${TABLE_ROUTER},priority=50,ip,nw_dst=${CLUSTER_SUBNET},actions=goto_table:${TABLE_EGRESS_TUN}"

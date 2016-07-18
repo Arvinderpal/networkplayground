@@ -61,7 +61,7 @@ sudo apt-get update
 #################
 # Misc Packages
 #################
-# apt-get install -q -y iperf netperf 
+apt-get install -q -y iperf netperf 
 # apt-get install -q -y ipsec-tools racoon
 
 # apt-get install -q -y openvswitch-switch openvswitch-ipsec

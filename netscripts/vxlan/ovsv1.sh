@@ -15,14 +15,16 @@ TUN_TYPE='vxlan'
 VXLAN_PORT="1"
 EXTERNAL_PORT="2"
 
+TABLE_CLASSIFY="0"
+TABLE_ARP_RESPONDER="5"
 TABLE_INGRESS_TUN="10"
 TABLE_INGRESS_CSG="13"
-TABLE_INGRESS_LOCAL="15"
+TABLE_INGRESS_HOST_POD="15"
 TABLE_ACL="17"
-TABLE_EGRESS_LOCAL="50"
+TABLE_EGRESS_LOCAL_POD="50"
 TABLE_EGRESS_TUN="55"
 TABLE_EGRESS_EXT="58"
-TABLE_ARP_RESPONDER="5"
+
 
 add_flows(){
 	########################
@@ -36,9 +38,9 @@ add_flows(){
 	########################
 	# 15. VNI Tag in REG0 (Table 15)
 	########################
-	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE "table=${TABLE_INGRESS_LOCAL},priority=100,in_port=${POD_PORT},ip,nw_src=${POD_IP},actions=load:${VNID}->NXM_NX_REG0[],goto_table:${TABLE_ACL}"
+	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE "table=${TABLE_INGRESS_HOST_POD},priority=100,in_port=${POD_PORT},ip,nw_src=${POD_IP},actions=load:${VNID}->NXM_NX_REG0[],goto_table:${TABLE_ACL}"
 	# ARP
-	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE "table=${TABLE_INGRESS_LOCAL},priority=100,in_port=${POD_PORT},arp,nw_src=${POD_IP},actions=load:${VNID}->NXM_NX_REG0[],goto_table:${TABLE_ACL}"
+	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE "table=${TABLE_INGRESS_HOST_POD},priority=100,in_port=${POD_PORT},arp,nw_src=${POD_IP},actions=load:${VNID}->NXM_NX_REG0[],goto_table:${TABLE_ACL}"
 
 	########################
 	# Table 13: Ingress from Cluster Gateway
@@ -81,17 +83,17 @@ add_flows(){
 	########################
 	# 	i. Allow traffic to same VNI
 	# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-	# 	"table=${TABLE_EGRESS_LOCAL},priority=100,ip,reg0=${VNID},nw_dst=${POD_IP},actions=output:${POD_PORT}"
+	# 	"table=${TABLE_EGRESS_LOCAL_POD},priority=100,ip,reg0=${VNID},nw_dst=${POD_IP},actions=output:${POD_PORT}"
 	# # ARP
 	# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-	# 	"table=${TABLE_EGRESS_LOCAL},priority=100,arp,reg0=${VNID},nw_dst=${POD_IP},actions=output:${POD_PORT}"
+	# 	"table=${TABLE_EGRESS_LOCAL_POD},priority=100,arp,reg0=${VNID},nw_dst=${POD_IP},actions=output:${POD_PORT}"
 
 	# 	NOTE: dropping VNID CHECK for the time being. ............................
 	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-		"table=${TABLE_EGRESS_LOCAL},priority=100,ip,nw_dst=${POD_IP},actions=output:${POD_PORT}"
+		"table=${TABLE_EGRESS_LOCAL_POD},priority=100,ip,nw_dst=${POD_IP},actions=output:${POD_PORT}"
 	# ARP
 	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-		"table=${TABLE_EGRESS_LOCAL},priority=100,arp,nw_dst=${POD_IP},actions=output:${POD_PORT}"
+		"table=${TABLE_EGRESS_LOCAL_POD},priority=100,arp,nw_dst=${POD_IP},actions=output:${POD_PORT}"
 
 
 	# Allow traffic to other VNIs if policy allows
@@ -105,17 +107,17 @@ del_flows(){
 	# 15. VNI Tag in REG0 (Table 15)
 	########################
 	#  could also delete based on port: in_port=${POD_PORT}
-	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_INGRESS_LOCAL},ip,nw_src=${POD_IP}"
+	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_INGRESS_HOST_POD},ip,nw_src=${POD_IP}"
 	# ARP
-	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_INGRESS_LOCAL},arp,nw_src=${POD_IP}"
+	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_INGRESS_HOST_POD},arp,nw_src=${POD_IP}"
 
 	########################
 	# Table 50: Egress to Local Pods
 	########################
 	# 	i. Allow traffic to same VNI
-	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_EGRESS_LOCAL},ip,nw_dst=${POD_IP}"
+	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_EGRESS_LOCAL_POD},ip,nw_dst=${POD_IP}"
 	# ARP
-	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_EGRESS_LOCAL},arp,nw_dst=${POD_IP}"
+	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_EGRESS_LOCAL_POD},arp,nw_dst=${POD_IP}"
 
 	# Allow traffic to other VNIs if policy allows
 	# TBD
