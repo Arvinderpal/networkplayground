@@ -62,21 +62,21 @@ add_flows(){
 	########################
 	# Table: TABLE_ARP_RESPONDER
 	########################
-	FLOATING_IP="10.1.1.235"
-	tmp=`echo ${FLOATING_IP//./ }`
-	FLOATING_IP_HEX=`printf '%02X' $tmp`
-	POD_MAC_HEX=`echo $POD_MAC | sed -e 's/://g'`
-	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-		"table=${TABLE_ARP_RESPONDER},priority=100,arp,nw_dst=${FLOATING_IP},actions=move:NXM_OF_ETH_SRC[]->NXM_OF_ETH_DST[],\
-		mod_dl_src:${POD_MAC},\
-		load:0x2->NXM_OF_ARP_OP[],\
-		move:NXM_NX_ARP_SHA[]->NXM_NX_ARP_THA[],\
-		move:NXM_OF_ARP_SPA[]->NXM_OF_ARP_TPA[],\
-		load:0x${POD_MAC_HEX}->NXM_NX_ARP_SHA[],\
-		load:0x${FLOATING_IP_HEX}->NXM_OF_ARP_SPA[],\
-		move:NXM_OF_IN_PORT[]->NXM_NX_REG3[0..15],\
-		load:0->NXM_OF_IN_PORT[],\
-		output:NXM_NX_REG3[0..15]"
+	# FLOATING_IP="10.1.1.235"
+	# tmp=`echo ${FLOATING_IP//./ }`
+	# FLOATING_IP_HEX=`printf '%02X' $tmp`
+	# POD_MAC_HEX=`echo $POD_MAC | sed -e 's/://g'`
+	# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	# 	"table=${TABLE_ARP_RESPONDER},priority=100,arp,nw_dst=${FLOATING_IP},actions=move:NXM_OF_ETH_SRC[]->NXM_OF_ETH_DST[],\
+	# 	mod_dl_src:${POD_MAC},\
+	# 	load:0x2->NXM_OF_ARP_OP[],\
+	# 	move:NXM_NX_ARP_SHA[]->NXM_NX_ARP_THA[],\
+	# 	move:NXM_OF_ARP_SPA[]->NXM_OF_ARP_TPA[],\
+	# 	load:0x${POD_MAC_HEX}->NXM_NX_ARP_SHA[],\
+	# 	load:0x${FLOATING_IP_HEX}->NXM_OF_ARP_SPA[],\
+	# 	move:NXM_OF_IN_PORT[]->NXM_NX_REG3[0..15],\
+	# 	load:0->NXM_OF_IN_PORT[],\
+	# 	output:NXM_NX_REG3[0..15]"
 	
 	########################
 	# Table 50: Egress to Local Pods

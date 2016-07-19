@@ -3,6 +3,16 @@ set -ex
 
 # /vagrant/netscripts/vxlan/setup.sh 10.1.0.0/16 10.1.1.0/24 10.1.2.0/24 10.1.3.0/24 192.168.70.202 192.168.70.203 192.168.70.201
 
+OVS_BRIDGE=ovs-br
+TUN_TYPE='vxlan'
+TUN_PORT="1"
+
+EXTERNAL_IF="eth0"
+EXTERNAL_PORT="2"
+
+CLUSTERSUBNETGW_IF="csg0"
+CLUSTERSUBNETGW_PORT="3"
+
 # cluster wide subnet 
 CLUSTER_SUBNET=$1 #="10.1.0.0/16"
 
@@ -16,17 +26,19 @@ REMOTE2_SUBNET=$4
 REMOTE1_IP=$5 
 REMOTE2_IP=$6
 
-BOX_IP=$7
+# BOX_IP=$7
+BOX_IP=''
+ETH_IP=`ifconfig $EXTERNAL_IF | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'`
+BR_IP=`ifconfig $OVS_BRIDGE | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'`
+if [ -z "$ETH_IP" ]
+then
+	BOX_IP=$BR_IP
+else
+  	BOX_IP=$ETH_IP
+fi     
 
-OVS_BRIDGE=ovs-br
-TUN_TYPE='vxlan'
-TUN_PORT="1"
+echo "BOX IP: ${BOX_IP}"
 
-EXTERNAL_IF="eth1"
-EXTERNAL_PORT="2"
-
-CLUSTERSUBNETGW_IF="csg0"
-CLUSTERSUBNETGW_PORT="3"
 
 # clean up old state:
 /vagrant/netscripts/vxlan/cleanall.sh
@@ -113,15 +125,22 @@ ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 ########################
 # FLOATING_IP="172.16.60.235"
 # FLOATING_IP="10.1.1.235"
-FLOATING_IP="192.168.70.201"
-TPORT="34567"
+FLOATING_IP=$BOX_IP #"192.168.70.201"
+TPORT="34567-40000"
 # Track all traffic from external port, reverse nat tracked connections
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	"table=${TABLE_INGRESS_EXTERNAL_PORT},priority=100,icmp,actions=ct(zone=1,nat),LOCAL"
+# allow NEW and ESTABLISHED packets to leave your local network, only allow ESTABLISHED connections back, 
+ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	"table=${TABLE_INGRESS_EXTERNAL_PORT},priority=100,ct_state=-trk,tcp,actions=ct(zone=1,nat),LOCAL"
+# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+# 	"table=${TABLE_INGRESS_EXTERNAL_PORT},priority=100,ct_state=+trk,ct_zone=1,tcp,actions=LOCAL"
 # ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 # 	"table=${TABLE_INGRESS_EXTERNAL_PORT},priority=100,icmp,ct_state=+trk+rel,ct_mark=1,ct_zone=1,actions=goto_table:${TABLE_ROUTER}"
 
 # all other traffic goes to LOCAL
+# TODO: we should be put tighter controls on traffic that we allow in since ip forwarding is enabled.
+# For example, we should only allow traffic with dst of this host. also enable arps (and possibly stp) traffic
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	"table=${TABLE_INGRESS_EXTERNAL_PORT},priority=1,actions=LOCAL"
 
@@ -130,8 +149,16 @@ ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 # Table 14: Ingress from ovs LOCAL Port
 ########################
 # SNAT traffic from cluster pods and send to EXTERNAL port
+# icmp:
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	"table=${TABLE_INGRESS_LOCAL_PORT},priority=100,icmp,nw_src=${CLUSTER_SUBNET},actions=ct(commit,zone=1,nat(src=${FLOATING_IP}),exec(set_field:1->ct_mark)),${EXTERNAL_PORT}"
+# tcp: 
+ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	"table=${TABLE_INGRESS_LOCAL_PORT},priority=100,ct_state=+new-est,tcp,nw_src=${CLUSTER_SUBNET},actions=ct(commit,zone=1,nat(src=${FLOATING_IP}:${TPORT})),${EXTERNAL_PORT}"
+ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	"table=${TABLE_INGRESS_LOCAL_PORT},priority=100,ct_state=-new+est,tcp,nw_src=${CLUSTER_SUBNET},actions=ct(commit,zone=1,nat(src=${FLOATING_IP}:${TPORT})),${EXTERNAL_PORT}"
+ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	"table=${TABLE_INGRESS_LOCAL_PORT},priority=100,ct_state=+est,tcp,nw_src=${FLOATING_IP},actions=output:${EXTERNAL_PORT}"
 
 # all other traffic goes to external port 
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
