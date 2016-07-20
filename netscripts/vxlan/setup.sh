@@ -64,6 +64,11 @@ ovs-vsctl --may-exist add-port $OVS_BRIDGE $CLUSTERSUBNETGW_IF -- set interface 
 CLUSTER_SUBNET_GW=`echo  $HOST_SUBNET | awk -F '.' '{ print $1 "." $2 "." $3 "." 1 }'`
 ifconfig $CLUSTERSUBNETGW_IF "${CLUSTER_SUBNET_GW}/24" up
 
+# for eth0 we also add default route to egress gateway
+if [ "$EXTERNAL_IF" == "eth0" ]
+then
+	ip route add default via 172.16.60.2
+fi
 
 # Enable IP Forwarding
 cat /proc/sys/net/ipv4/ip_forward
