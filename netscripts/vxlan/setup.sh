@@ -1,14 +1,11 @@
 #!/bin/bash
 set -ex
 
-# /vagrant/netscripts/vxlan/setup.sh 10.1.0.0/16 10.1.1.0/24 10.1.2.0/24 10.1.3.0/24 192.168.70.202 192.168.70.203 192.168.70.201
+# /vagrant/netscripts/vxlan/setup.sh 10.1.0.0/16 10.1.1.0/24 10.1.2.0/24 10.1.3.0/24 192.168.70.202 192.168.70.203 eth1
 
 OVS_BRIDGE=ovs-br
 TUN_TYPE='vxlan'
 TUN_PORT="1"
-
-EXTERNAL_IF="eth0"
-EXTERNAL_PORT="2"
 
 CLUSTERSUBNETGW_IF="csg0"
 CLUSTERSUBNETGW_PORT="3"
@@ -25,6 +22,13 @@ REMOTE2_SUBNET=$4
 # Physical IPs of remote nodes
 REMOTE1_IP=$5 
 REMOTE2_IP=$6
+
+# EXTERNAL_IF="eth0"
+EXTERNAL_IF=$7
+EXTERNAL_PORT="2"
+
+EXTERNAL_IF_MAC=`ip link show dev $EXTERNAL_IF | sed -n -e 's/.*link.ether \([^ ]*\).*/\1/p'`
+EXTERNAL_IF_MAC_HEX=`echo $EXTERNAL_IF_MAC | sed -e 's/://g'`
 
 # BOX_IP=$7
 BOX_IP=''
@@ -86,6 +90,11 @@ TABLE_INGRESS_HOST_POD="15"
 TABLE_ACL="17"
 TABLE_NAT="20"
 TABLE_ROUTER="40"
+TABLE_DE_NAT_EXTERNAL_IN_PHASE_1="42"
+TABLE_DE_NAT_EXTERNAL_IN_PHASE_2="43"
+TABLE_ARP_EXTERNAL="45"
+TABLE_NAT_EXTERNAL_PHASE_1="47"
+TABLE_NAT_EXTERNAL_PHASE_2="49"
 TABLE_EGRESS_LOCAL_POD="50"
 TABLE_EGRESS_TUN="55"
 TABLE_EGRESS_EXTERNAL_PORT="58"
@@ -134,7 +143,9 @@ FLOATING_IP=$BOX_IP #"192.168.70.201"
 TPORT="34567-40000"
 # Track all traffic from external port, reverse nat tracked connections
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-	"table=${TABLE_INGRESS_EXTERNAL_PORT},priority=100,icmp,actions=ct(zone=1,nat),LOCAL"
+	"table=${TABLE_INGRESS_EXTERNAL_PORT},priority=100,icmp,actions=goto_table:${TABLE_DE_NAT_EXTERNAL_IN_PHASE_1}"
+# "table=${TABLE_INGRESS_EXTERNAL_PORT},priority=100,icmp,actions=ct(zone=1,nat),LOCAL"
+
 # allow NEW and ESTABLISHED packets to leave your local network, only allow ESTABLISHED connections back, 
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	"table=${TABLE_INGRESS_EXTERNAL_PORT},priority=100,ct_state=-trk,tcp,actions=ct(zone=1,nat),LOCAL"
@@ -148,7 +159,6 @@ ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 # For example, we should only allow traffic with dst of this host. also enable arps (and possibly stp) traffic
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	"table=${TABLE_INGRESS_EXTERNAL_PORT},priority=1,actions=LOCAL"
-
 
 ########################
 # Table 14: Ingress from ovs LOCAL Port
@@ -267,21 +277,64 @@ ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	"table=${TABLE_ROUTER},priority=200,ip,nw_dst=${CLUSTER_SUBNET_GW},actions=output:${CLUSTERSUBNETGW_PORT}"
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-	"table=${TABLE_ROUTER},priority=200,arp,nw_dst=${CLUSTER_SUBNET_GW},actions=output:${CLUSTERSUBNETGW_PORT}"
+	"table=${TABLE_ROUTER},priority=200,arp,nw_dst=${CLUSTER_SUBNET_GW},actions=goto_table:${TABLE_ARP_EXTERNAL}"
 # External Traffic to Local Pod
 # in_port=2,ct_state=-trk,tcp,tp_dst=34567,action=ct(table=0,zone=1,nat)
 # ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 # 	"table=${TABLE_ROUTER},priority=200,ip,in_port=${CLUSTERSUBNETGW_PORT},nw_dst=${HOST_SUBNET},actions=goto_table:${TABLE_INGRESS_CSG}"
 
+# external traffic from pods being sent directly to external interface
+ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	"table=${TABLE_ROUTER},priority=1,dl_dst=${EXTERNAL_IF_MAC},actions=goto_table:${TABLE_NAT_EXTERNAL_PHASE_1}"
 
 # All other traffic:
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	"table=${TABLE_ROUTER},priority=1,actions=output:${CLUSTERSUBNETGW_PORT}"
 
+
 ########################
-# Table 50: Egress to Pods
-# flows added during pod add/del
+# Table: TABLE_ARP_EXTERNAL
 ########################
+# FLOATING_IP="10.1.1.235"
+tmp=`echo ${CLUSTER_SUBNET_GW//./ }`
+CLUSTER_SUBNET_GW_IP_HEX=`printf '%02X' $tmp`
+
+ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	"table=${TABLE_ARP_EXTERNAL},priority=100,arp,actions=\
+	move:NXM_OF_ETH_SRC[]->NXM_OF_ETH_DST[],\
+	mod_dl_src:${EXTERNAL_IF_MAC},\
+	load:0x2->NXM_OF_ARP_OP[],\
+	move:NXM_NX_ARP_SHA[]->NXM_NX_ARP_THA[],\
+	move:NXM_OF_ARP_SPA[]->NXM_OF_ARP_TPA[],\
+	load:0x${EXTERNAL_IF_MAC_HEX}->NXM_NX_ARP_SHA[],\
+	load:0x${CLUSTER_SUBNET_GW_IP_HEX}->NXM_OF_ARP_SPA[],\
+	move:NXM_OF_IN_PORT[]->NXM_NX_REG3[0..15],\
+	load:0->NXM_OF_IN_PORT[],\
+	output:NXM_NX_REG3[0..15]"
+
+
+########################
+# Table: TABLE_NAT_EXTERNAL_PHASE_1
+########################
+
+# icmp:
+ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	"table=${TABLE_NAT_EXTERNAL_PHASE_1},priority=100,icmp,actions=ct(commit,zone=1,nat(src=${BOX_IP})),goto_table=${TABLE_NAT_EXTERNAL_PHASE_2}"
+
+########################
+# Table: TABLE_NAT_EXTERNAL_PHASE_2
+########################
+
+# DEFAULT_GW_IP=`/sbin/ip route | awk '/default/ { print $3 }'`
+DEFAULT_GW_IP=172.16.60.2
+# DEFAULT_GW_MAC=`arp | grep "${DEFAULT_GW_IP} " | awk '{print $3}'`
+DEFAULT_GW_MAC=00:50:56:eb:ff:a1
+
+ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	"table=${TABLE_NAT_EXTERNAL_PHASE_2},actions=mod_dl_src=${EXTERNAL_IF_MAC},mod_dl_dst=${DEFAULT_GW_MAC},${EXTERNAL_PORT}"
+
+
+
 
 ########################
 # Table 55: Egress to Tunnel

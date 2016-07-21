@@ -12,10 +12,24 @@ POD_IP=$2
 POD_PORT=$3
 VNID=$4
 HOST_SUBNET=$5 # e.g. 10.1.5.0/24
+# EXTERNAL_IF="eth0"
+EXTERNAL_IF=$6
 
 OVS_BRIDGE=ovs-br
 intveth="${NAME}-tap"
 extveth="ovs-${NAME}-tap"
+
+# BOX_IP=''
+# # ETH_IP=`ifconfig $EXTERNAL_IF | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'`
+# # BR_IP=`ifconfig $OVS_BRIDGE | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'`
+# # if [ -z "$ETH_IP" ]
+# # then
+# # 	BOX_IP=$BR_IP
+# # else
+# #   	BOX_IP=$ETH_IP
+# # fi     
+
+echo "BOX IP: ${BOX_IP}"
 
 cleanup(){
 list=`ip netns list`
@@ -50,6 +64,7 @@ ip netns exec $NAME ip addr add dev $intveth "${POD_IP}/16"
 # ip netns exec $NAME ip route add default dev $intveth
 gw_ip=`echo  $HOST_SUBNET | awk -F '.' '{ print $1 "." $2 "." $3 "." 1 }'`
 ip netns exec $NAME ip route add default via $gw_ip
+# ip netns exec $NAME ip route add default via $BOX_IP
 
 # get the mac on inernal veth
 POD_MAC=`ip netns exec $NAME ip link show dev $intveth | sed -n -e 's/.*link.ether \([^ ]*\).*/\1/p'`

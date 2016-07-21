@@ -63,9 +63,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # v up --provision-with bootstrap
       # v reload --provision-with networksetup,simplenetwork
 
-      srv.vm.provision "networksetup", type:"shell", path: "./netscripts/vxlan/setup.sh", args: [servers["clustersubnet"], servers["host_subnet"],  servers["remote1_subnet"], servers["remote2_subnet"], servers["remote1"], servers["remote2"], servers["priv_ip"]], privileged: true
+      srv.vm.provision "networksetup", type:"shell", path: "./netscripts/vxlan/setup.sh", args: [servers["clustersubnet"], servers["host_subnet"],  servers["remote1_subnet"], servers["remote2_subnet"], servers["remote1"], servers["remote2"], servers["external_if"]], privileged: true
       
-      srv.vm.provision "simplenetwork", type:"shell", path: "./netscripts/vxlan/simplenetwork.sh", args: [servers["pod_ip_prefix"], servers["host_subnet"], servers["priv_ip"]], privileged: true
+      srv.vm.provision "simplenetwork", type:"shell", path: "./netscripts/vxlan/simplenetwork.sh", args: [servers["pod_ip_prefix"], servers["host_subnet"], servers["external_if"]], privileged: true
 
 
 

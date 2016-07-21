@@ -21,6 +21,8 @@ TABLE_INGRESS_TUN="10"
 TABLE_INGRESS_CSG="13"
 TABLE_INGRESS_HOST_POD="15"
 TABLE_ACL="17"
+TABLE_DE_NAT_EXTERNAL_IN_PHASE_1="42"
+TABLE_DE_NAT_EXTERNAL_IN_PHASE_2="43"
 TABLE_EGRESS_LOCAL_POD="50"
 TABLE_EGRESS_TUN="55"
 TABLE_EGRESS_EXT="58"
@@ -79,6 +81,19 @@ add_flows(){
 	# 	output:NXM_NX_REG3[0..15]"
 	
 	########################
+	# Table 42: TABLE_DE_NAT_EXTERNAL_IN_PHASE_1
+	########################
+	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+		"table=${TABLE_DE_NAT_EXTERNAL_IN_PHASE_1},priority=100,actions=mod_dl_dst=${POD_MAC},goto_table=${TABLE_DE_NAT_EXTERNAL_IN_PHASE_2}"
+
+	########################
+	# Table 42: TABLE_DE_NAT_EXTERNAL_IN_PHASE_2
+	########################
+	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+		"table=${TABLE_DE_NAT_EXTERNAL_IN_PHASE_2},priority=100,icmp,actions=ct(zone=1,nat),goto_table:${TABLE_EGRESS_LOCAL_POD}"
+
+
+	########################
 	# Table 50: Egress to Local Pods
 	########################
 	# 	i. Allow traffic to same VNI
@@ -88,13 +103,19 @@ add_flows(){
 	# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	# 	"table=${TABLE_EGRESS_LOCAL_POD},priority=100,arp,reg0=${VNID},nw_dst=${POD_IP},actions=output:${POD_PORT}"
 
-	# 	NOTE: dropping VNID CHECK for the time being. ............................
+	# 	***** BUG **** this rule should match on ip_dst but does not eventhough wireshark shows the nw_dst to be 10.1.1.2
+	# we can get around this issue by comparing MACs. in that case packet gets to pod just fine. 
 	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 		"table=${TABLE_EGRESS_LOCAL_POD},priority=100,ip,nw_dst=${POD_IP},actions=output:${POD_PORT}"
 	# ARP
 	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 		"table=${TABLE_EGRESS_LOCAL_POD},priority=100,arp,nw_dst=${POD_IP},actions=output:${POD_PORT}"
 
+	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+		"table=${TABLE_EGRESS_LOCAL_POD},priority=50,dl_dst=${POD_MAC},actions=output:${POD_PORT}"
+
+	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+		"table=${TABLE_EGRESS_LOCAL_POD},priority=1,ip,actions=output:${POD_PORT}"
 
 	# Allow traffic to other VNIs if policy allows
 	# TBD
