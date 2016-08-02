@@ -26,7 +26,7 @@ $CMD_PATH/addnetns.sh ns2 $IP_PREFIX"3" ${IP_PREFIX//.}"3" $VNID2 $HOST_SUBNET $
 MY_IP="10.1.1.2"
 PEER_IP="10.1.2.2"
 PROTO="icmp"
-PROTO_PORT="0"
+PROTO_PORT="12000"
 if [[ $HOST_NAME =~ "etcd-01" ]] ; then 
 	$CMD_PATH/allow_ingress.sh "to_me" $MY_IP $PEER_IP $PROTO $PROTO_PORT ${MY_IP//.}
 fi
