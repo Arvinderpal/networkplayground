@@ -11,6 +11,7 @@ POD_PORT=$6
 OVS_BRIDGE=ovs-br
 
 # TABLES
+TABLE_CLASSIFY="0"
 TABLE_ACL="17"
 TABLE_ROUTER="40"
 TABLE_EGRESS_LOCAL_POD="50"
@@ -55,7 +56,7 @@ from_peer_flows(){
 	# tcp: (1)
 	# TO remote pod
 	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-		"table=${TABLE_ACL},priority=200,ct_state=+new,tcp,nw_src=${POD_IP},nw_dst=${PEER_IP},actions=ct(commit,zone=1),goto_table:${TABLE_ROUTER}"
+		"table=${TABLE_ACL},priority=200,ct_state=+new,tcp,nw_src=${POD_IP},nw_dst=${PEER_IP},actions=ct(commit),goto_table:${TABLE_ROUTER}"
 	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 		"table=${TABLE_ACL},priority=300,ct_state=+est,tcp,nw_src=${POD_IP},nw_dst=${PEER_IP},actions=goto_table:${TABLE_ROUTER}"
 
@@ -63,7 +64,12 @@ from_peer_flows(){
 	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 		"table=${TABLE_ACL},priority=200,ct_state=+new,tcp,nw_dst=${POD_IP},nw_src=${PEER_IP},actions=goto_table:${TABLE_ROUTER}"
 	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+		"table=${TABLE_ACL},priority=200,ct_state=-est,tcp,nw_dst=${POD_IP},nw_src=${PEER_IP},actions=ct(table=${TABLE_CLASSIFY})"
+	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 		"table=${TABLE_ACL},priority=200,ct_state=+est,tcp,nw_dst=${POD_IP},nw_src=${PEER_IP},actions=goto_table:${TABLE_ROUTER}"
+	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+		"table=${TABLE_ACL},priority=200,ct_state=+rel,tcp,nw_dst=${POD_IP},nw_src=${PEER_IP},actions=goto_table:${TABLE_ROUTER}"
+
 	# Allow related ICMP packets
 	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 		"table=${TABLE_ACL},priority=200,ct_state=+rel,icmp,nw_dst=${POD_IP},nw_src=${PEER_IP},actions=goto_table:${TABLE_ROUTER}"
