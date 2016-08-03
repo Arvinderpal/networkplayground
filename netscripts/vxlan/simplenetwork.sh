@@ -35,3 +35,14 @@ if [[ $HOST_NAME =~ "etcd-02" ]] ; then
 	$CMD_PATH/allow_ingress.sh  "from_peer" $PEER_IP $MY_IP $PROTO $PROTO_PORT ${PEER_IP//.}
 fi
 
+
+# allow ns1 on host etcd-01 to receive (ingress) traffic from ns2 on same host
+MY_IP="10.1.1.2"
+PEER_IP="10.1.1.3"
+PROTO="tcp"
+PROTO_PORT="11000"
+if [[ $HOST_NAME =~ "etcd-01" ]] ; then 
+	$CMD_PATH/allow_ingress_same_host.sh "to_me" $MY_IP $PEER_IP $PROTO $PROTO_PORT ${MY_IP//.}
+	$CMD_PATH/allow_ingress_same_host.sh  "from_peer" $PEER_IP $MY_IP $PROTO $PROTO_PORT ${PEER_IP//.}
+fi
+
