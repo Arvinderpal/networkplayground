@@ -27,12 +27,13 @@ MY_IP="10.1.1.2"
 PEER_IP="10.1.2.2"
 PROTO="icmp"
 PROTO_PORT="12000"
+POLICY_UID="0123456789ABCDEF"
 if [[ $HOST_NAME =~ "etcd-01" ]] ; then 
-	$CMD_PATH/allow_ingress.sh "to_me" $MY_IP $PEER_IP $PROTO $PROTO_PORT ${MY_IP//.}
+	$CMD_PATH/allow_ingress.sh "to_me" $POLICY_UID $MY_IP $PEER_IP $PROTO $PROTO_PORT ${MY_IP//.}
 fi
 # note MY_IP and PEER_IP are switched:
 if [[ $HOST_NAME =~ "etcd-02" ]] ; then 
-	$CMD_PATH/allow_ingress.sh  "from_peer" $PEER_IP $MY_IP $PROTO $PROTO_PORT ${PEER_IP//.}
+	$CMD_PATH/allow_ingress.sh  "from_peer" $POLICY_UID $PEER_IP $MY_IP $PROTO $PROTO_PORT ${PEER_IP//.}
 fi
 
 
@@ -41,8 +42,9 @@ MY_IP="10.1.1.2"
 PEER_IP="10.1.1.3"
 PROTO="tcp"
 PROTO_PORT="11000"
+POLICY_UID="1111111111111111"
 if [[ $HOST_NAME =~ "etcd-01" ]] ; then 
-	$CMD_PATH/allow_ingress_same_host.sh "to_me" $MY_IP $PEER_IP $PROTO $PROTO_PORT ${MY_IP//.}
-	$CMD_PATH/allow_ingress_same_host.sh  "from_peer" $PEER_IP $MY_IP $PROTO $PROTO_PORT ${PEER_IP//.}
+	$CMD_PATH/allow_ingress_same_host.sh "to_me" $POLICY_UID $MY_IP $PEER_IP $PROTO $PROTO_PORT ${MY_IP//.}
+	$CMD_PATH/allow_ingress_same_host.sh  "from_peer" $POLICY_UID $PEER_IP $MY_IP $PROTO $PROTO_PORT ${PEER_IP//.} 
 fi
 

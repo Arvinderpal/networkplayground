@@ -32,12 +32,6 @@ TABLE_EGRESS_LOCAL_PORT="60"
 
 
 add_flows(){
-	########################
-	# 15. VNI Tag in REG0 (Table 15)
-	########################
-	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE "table=${TABLE_INGRESS_HOST_POD},priority=100,in_port=${POD_PORT},ip,nw_src=${POD_IP},actions=load:${VNID}->NXM_NX_REG0[],goto_table:${TABLE_ACL}"
-	# ARP
-	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE "table=${TABLE_INGRESS_HOST_POD},priority=100,in_port=${POD_PORT},arp,nw_src=${POD_IP},actions=load:${VNID}->NXM_NX_REG0[],goto_table:${TABLE_ACL}"
 
 	########################
 	# Table 13: Ingress from Cluster Gateway
@@ -50,6 +44,15 @@ add_flows(){
 		"table=${TABLE_INGRESS_CGW},priority=100,arp,nw_dst=${POD_IP},actions=output:${POD_PORT}"
 	# NOTE: the host and any container running locally (outside ovs control e.g. docker container on host) can 
 	# reach the containers on the same host. we can change this if desired later. 
+
+	########################
+	# 15. VNI Tag in REG0 (Table 15)
+	########################
+	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+		"table=${TABLE_INGRESS_HOST_POD},priority=100,in_port=${POD_PORT},ip,nw_src=${POD_IP},actions=load:${VNID}->NXM_NX_REG0[],goto_table:${TABLE_ACL}"
+	# ARP
+	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+		"table=${TABLE_INGRESS_HOST_POD},priority=100,in_port=${POD_PORT},arp,nw_src=${POD_IP},actions=load:${VNID}->NXM_NX_REG0[],goto_table:${TABLE_ACL}"
 
 	########################
 	# Table 17: ACL

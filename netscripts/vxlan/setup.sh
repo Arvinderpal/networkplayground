@@ -120,6 +120,7 @@ ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	"table=${TABLE_CLASSIFY},priority=1,ip,actions=ct(table=${TABLE_INGRESS_HOST_POD})"
 ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	"table=${TABLE_CLASSIFY},priority=1,arp,actions=goto_table:${TABLE_INGRESS_HOST_POD}"
+	
 ########################
 # Table 5: TABLE_ARP_RESPONDER
 ########################
