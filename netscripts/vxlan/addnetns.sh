@@ -35,10 +35,12 @@ ip netns add $NAME
 # create a port pair
 ip link add $intveth type veth peer name $extveth
 # attach one side to ovs
-ovs-vsctl add-port $OVS_BRIDGE $extveth -- set Interface $extveth ofport_request=$POD_PORT
+ovs-vsctl add-port $OVS_BRIDGE $extveth -- set Interface $extveth \
+	ofport_request=$POD_PORT 
+# type=internal \
 
 # attach the other side to namespace
-ip link set $intveth netns $NAME
+ip link set $intveth netns $NAME mtu 1200
 # set the ports to up
 ip netns exec $NAME ip link set dev $intveth up
 ip link set dev $extveth up
