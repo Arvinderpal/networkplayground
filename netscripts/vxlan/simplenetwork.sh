@@ -4,6 +4,7 @@ set -ex
 # /vagrant/netscripts/vxlan/simplenetwork.sh 10.1.1. 10.1.1.0/24 192.168.70.201
 
 # the script is generally called by Vagrantfile to setup default networks
+OVS_BRIDGE=ovs-br
 
 CMD_PATH="/vagrant/netscripts/vxlan/"
 HOST_NAME=$1
@@ -29,11 +30,17 @@ PROTO="icmp"
 PROTO_PORT="12000"
 POLICY_UID="0123456789ABCDEF"
 if [[ $HOST_NAME =~ "etcd-01" ]] ; then 
-	$CMD_PATH/allow_ingress.sh "to_me" $POLICY_UID $MY_IP $PEER_IP $PROTO $PROTO_PORT ${MY_IP//.}
+	$CMD_PATH/allow_ingress.sh "to_me" $POLICY_UID $MY_IP $PEER_IP $PROTO $PROTO_PORT ${MY_IP//.} > /tmp/allow-ingress-$HOST_NAME.txt
+	cat /tmp/allow-ingress-$HOST_NAME.txt
+	# ovs-ofctl -O OpenFlow14 --bundle replace-flows $OVS_BRIDGE /tmp/allow-ingress-$HOST_NAME.txt
+	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/allow-ingress-$HOST_NAME.txt
 fi
 # note MY_IP and PEER_IP are switched:
 if [[ $HOST_NAME =~ "etcd-02" ]] ; then 
-	$CMD_PATH/allow_ingress.sh  "from_peer" $POLICY_UID $PEER_IP $MY_IP $PROTO $PROTO_PORT ${PEER_IP//.}
+	$CMD_PATH/allow_ingress.sh  "from_peer" $POLICY_UID $PEER_IP $MY_IP $PROTO $PROTO_PORT ${PEER_IP//.} > /tmp/allow-ingress-$HOST_NAME.txt
+	cat /tmp/allow-ingress-$HOST_NAME.txt
+	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/allow-ingress-$HOST_NAME.txt
+	# ovs-ofctl -O OpenFlow14 --bundle replace-flows $OVS_BRIDGE /tmp/allow-ingress-$HOST_NAME.txt
 fi
 
 
@@ -44,7 +51,11 @@ PROTO="tcp"
 PROTO_PORT="11000"
 POLICY_UID="1111111111111111"
 if [[ $HOST_NAME =~ "etcd-01" ]] ; then 
-	$CMD_PATH/allow_ingress_same_host.sh "to_me" $POLICY_UID $MY_IP $PEER_IP $PROTO $PROTO_PORT ${MY_IP//.}
-	$CMD_PATH/allow_ingress_same_host.sh  "from_peer" $POLICY_UID $PEER_IP $MY_IP $PROTO $PROTO_PORT ${PEER_IP//.} 
+	# we delete all rules belonging to the policy on this host, then insert new ones. all as part of single transaction
+	echo delete "cookie=0x${POLICY_UID}/-1" > /tmp/allow-ingress-same-host-$HOST_NAME.txt
+	$CMD_PATH/allow_ingress_same_host.sh "to_me" $POLICY_UID $MY_IP $PEER_IP $PROTO $PROTO_PORT ${MY_IP//.} >> /tmp/allow-ingress-same-host-$HOST_NAME.txt
+	$CMD_PATH/allow_ingress_same_host.sh  "from_peer" $POLICY_UID $PEER_IP $MY_IP $PROTO $PROTO_PORT ${PEER_IP//.} >> /tmp/allow-ingress-same-host-$HOST_NAME.txt
+	cat /tmp/allow-ingress-same-host-$HOST_NAME.txt
+	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/allow-ingress-same-host-$HOST_NAME.txt
 fi
 

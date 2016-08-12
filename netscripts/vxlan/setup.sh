@@ -50,6 +50,9 @@ TPORT="34567-40000"
 # create the switch
 ovs-vsctl --may-exist add-br $OVS_BRIDGE -- set Bridge $OVS_BRIDGE fail-mode=secure
 
+# enable upto and including OF1.4
+ovs-vsctl set bridge $OVS_BRIDGE protocols=OpenFlow10,OpenFlow11,OpenFlow12,OpenFlow13,OpenFlow14
+
 # Create external interface
 ovs-vsctl --may-exist add-port $OVS_BRIDGE $EXTERNAL_IF -- set interface $EXTERNAL_IF ofport_request=$EXTERNAL_PORT
 ifconfig $EXTERNAL_IF 0
