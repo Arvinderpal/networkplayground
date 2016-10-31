@@ -37,11 +37,11 @@ add_flows(){
 	# Table 13: Ingress from Cluster Gateway
 	########################
 	# 	Rules should be added if pod has egress access
-	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-		"table=${TABLE_INGRESS_CGW},priority=100,ip,nw_dst=${POD_IP},actions=output:${POD_PORT}"
-	# ARP
-	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-		"table=${TABLE_INGRESS_CGW},priority=100,arp,nw_dst=${POD_IP},actions=output:${POD_PORT}"
+	# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	# 	"table=${TABLE_INGRESS_CGW},priority=100,ip,nw_dst=${POD_IP},actions=output:${POD_PORT}"
+	# # ARP
+	# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	# 	"table=${TABLE_INGRESS_CGW},priority=100,arp,nw_dst=${POD_IP},actions=output:${POD_PORT}"
 	# NOTE: the host and any container running locally (outside ovs control e.g. docker container on host) can 
 	# reach the containers on the same host. we can change this if desired later. 
 
@@ -61,8 +61,8 @@ add_flows(){
 	# TBD
 	# Enable external access: 
 	# We could put more granular control here. E.G. tcp on port 80...
-	ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
-		"table=${TABLE_ACL},priority=50,in_port=${POD_PORT},ip,nw_src=${POD_IP},actions=goto_table:${TABLE_ROUTER}"
+	# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
+	# 	"table=${TABLE_ACL},priority=50,in_port=${POD_PORT},ip,nw_src=${POD_IP},actions=goto_table:${TABLE_ROUTER}"
 
 	########################
 	# Table: TABLE_ARP_RESPONDER
@@ -107,6 +107,14 @@ add_flows(){
 
 
 del_flows(){
+	
+	########################
+	# Table 13: Ingress from Cluster Gateway
+	########################
+	# 	Rules should be added if pod has egress access
+	# ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_INGRESS_CGW},ip,nw_dst=${POD_IP}"
+	# # ARP
+	# ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_INGRESS_CGW},arp,nw_dst=${POD_IP}"
 
 	########################
 	# 15. VNI Tag in REG0 (Table 15)
@@ -117,11 +125,16 @@ del_flows(){
 	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_INGRESS_HOST_POD},arp,nw_src=${POD_IP}"
 
 	########################
+	# Table 17: ACL
+	########################
+	# ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_ACL},in_port=${POD_PORT},ip,nw_src=${POD_IP}"
+
+	########################
 	# Table 50: Egress to Local Pods
 	########################
 	# 	i. Allow traffic to same VNI
-	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_EGRESS_LOCAL_POD},ip,nw_dst=${POD_IP}"
-	# ARP
+	# ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_EGRESS_LOCAL_POD},ip,nw_dst=${POD_IP}"
+	# # ARP
 	ovs-ofctl -O OpenFlow13 del-flows $OVS_BRIDGE "table=${TABLE_EGRESS_LOCAL_POD},arp,nw_dst=${POD_IP}"
 
 	# Allow traffic to other VNIs if policy allows

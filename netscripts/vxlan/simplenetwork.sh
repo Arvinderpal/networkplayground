@@ -23,10 +23,11 @@ $CMD_PATH/addnetns.sh ns2 $IP_PREFIX"3" ${IP_PREFIX//.}"3" $VNID2 $HOST_SUBNET $
 
 # add rules 
 
-# allow ns1 on host etcd-01 to receive (ingress) traffic from ns1 on host etcd-02. (Same namespace/VNID)
+# TCP:
+# allow ns1 on host etcd-01 to receive (ingress) traffic from ns1 on host etcd-02. 
 MY_IP="10.1.1.2"
 PEER_IP="10.1.2.2"
-PROTO="icmp"
+PROTO="tcp"
 PROTO_PORT="12000"
 POLICY_UID="0123456789ABCDEF"
 if [[ $HOST_NAME =~ "etcd-01" ]] ; then 
@@ -43,6 +44,26 @@ if [[ $HOST_NAME =~ "etcd-02" ]] ; then
 	# ovs-ofctl -O OpenFlow14 --bundle replace-flows $OVS_BRIDGE /tmp/allow-ingress-$HOST_NAME.txt
 fi
 
+# UDP
+# allow ns1 on host etcd-01 to receive (ingress) traffic from ns1 on host etcd-02. 
+MY_IP="10.1.1.2"
+PEER_IP="10.1.2.2"
+PROTO="udp"
+PROTO_PORT="11000"
+POLICY_UID="2222222222222222"
+if [[ $HOST_NAME =~ "etcd-01" ]] ; then 
+	$CMD_PATH/allow_ingress.sh "to_me" $POLICY_UID $MY_IP $PEER_IP $PROTO $PROTO_PORT ${MY_IP//.} > /tmp/allow-ingress-$HOST_NAME.txt
+	cat /tmp/allow-ingress-$HOST_NAME.txt
+	# ovs-ofctl -O OpenFlow14 --bundle replace-flows $OVS_BRIDGE /tmp/allow-ingress-$HOST_NAME.txt
+	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/allow-ingress-$HOST_NAME.txt
+fi
+# note MY_IP and PEER_IP are switched:
+if [[ $HOST_NAME =~ "etcd-02" ]] ; then 
+	$CMD_PATH/allow_ingress.sh  "from_peer" $POLICY_UID $PEER_IP $MY_IP $PROTO $PROTO_PORT ${PEER_IP//.} > /tmp/allow-ingress-$HOST_NAME.txt
+	cat /tmp/allow-ingress-$HOST_NAME.txt
+	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/allow-ingress-$HOST_NAME.txt
+	# ovs-ofctl -O OpenFlow14 --bundle replace-flows $OVS_BRIDGE /tmp/allow-ingress-$HOST_NAME.txt
+fi
 
 # allow ns1 on host etcd-01 to receive (ingress) traffic from ns2 on same host
 MY_IP="10.1.1.2"
@@ -59,3 +80,22 @@ if [[ $HOST_NAME =~ "etcd-01" ]] ; then
 	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/allow-ingress-same-host-$HOST_NAME.txt
 fi
 
+# allow ns2 on etcd-2 and ns1 and ns2 etcd-03 to be on the "open" network
+POLICY_UID="F000000000000000"
+if [[ $HOST_NAME =~ "etcd-02" ]] ; then 
+	MY_IP="10.1.2.3"
+	# $CMD_PATH/isolation_on_off.sh "on" $POLICY_UID $MY_IP ${MY_IP//.} "0" >> /tmp/isolation-off-$HOST_NAME.txt
+	$CMD_PATH/isolation_on_off.sh "off" $POLICY_UID $MY_IP ${MY_IP//.} "0" > /tmp/isolation-off-$HOST_NAME.txt
+	cat /tmp/isolation-off-$HOST_NAME.txt
+	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/isolation-off-$HOST_NAME.txt
+fi
+if [[ $HOST_NAME =~ "etcd-03" ]] ; then 
+	MY_IP="10.1.3.2"
+	$CMD_PATH/isolation_on_off.sh "off" $POLICY_UID $MY_IP ${MY_IP//.} "0" > /tmp/isolation-off-$HOST_NAME.txt
+
+	MY_IP="10.1.3.3"
+	$CMD_PATH/isolation_on_off.sh "off" $POLICY_UID $MY_IP ${MY_IP//.} "0" >> /tmp/isolation-off-$HOST_NAME.txt
+
+	cat /tmp/isolation-off-$HOST_NAME.txt
+	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/isolation-off-$HOST_NAME.txt
+fi

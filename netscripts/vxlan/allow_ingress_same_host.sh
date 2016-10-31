@@ -65,8 +65,56 @@ from_peer_flows(){
 
 	# ovs-ofctl -O OpenFlow13 add-flow $OVS_BRIDGE \
 	# 	"table=${TABLE_EGRESS_LOCAL_POD},priority=100,tcp,nw_dst=${POD_IP},nw_src=${PEER_IP},actions=output:${POD_PORT}"
+}
+
+# NOTE(awander): not using conntrack on the "to" side; only on "from"
+udp_to_me_flows(){
+
+	########################
+	# Table 17: ACL
+	########################
+	# egress traffic to remote pod
+	# we allows this traffic to go through; if it is not return traffic then it should be filtered at the dest using conntrack
+	# (3)
+	echo "table=${TABLE_ACL},cookie=0x${COOKIE},priority=200,udp,nw_src=${POD_IP},nw_dst=${PEER_IP},tp_src=${PROTO_PORT},actions=goto_table:${TABLE_ROUTER}"
+	# echo "table=${TABLE_ACL},cookie=0x${COOKIE},priority=200,icmp,nw_src=${POD_IP},nw_dst=${PEER_IP},actions=goto_table:${TABLE_ROUTER}"
+
+	########################
+	# Table 50: Egress to Local Pods
+	########################
+	# (2)
+	echo "table=${TABLE_EGRESS_LOCAL_POD},cookie=0x${COOKIE},priority=100,udp,nw_dst=${POD_IP},nw_src=${PEER_IP},tp_dst=${PROTO_PORT},actions=output:${POD_PORT}"
+	# we allow *all* icmp messages
+	# echo "table=${TABLE_EGRESS_LOCAL_POD},cookie=0x${COOKIE},priority=100,icmp,nw_src=${PEER_IP},tp_dst=${PROTO_PORT},actions=output:${POD_PORT}"
+
+	# TODO(awander): if vnid is specified, we only need a single rule at TABLE_EGRESS_LOCAL_POD instead of one for each PEER_IP
+	# we could do this by checking if vnid is present, if so, we drop the nw_src=${PEER_IP} check and use VNID. 
+}
+
+udp_from_peer_flows(){
+
+	########################
+	# Table 17: ACL
+	########################
+	# allow new connections to destination pod(s)
+	# TO remote pod 
+	# (1)
+	echo "table=${TABLE_ACL},cookie=0x${COOKIE},priority=200,ct_state=+new,udp,nw_src=${POD_IP},nw_dst=${PEER_IP},actions=ct(commit),goto_table:${TABLE_ROUTER}"
+	# (5)
+	echo "table=${TABLE_ACL},cookie=0x${COOKIE},priority=300,ct_state=+est,udp,nw_src=${POD_IP},nw_dst=${PEER_IP},actions=goto_table:${TABLE_ROUTER}"
+	# allow icmp
+	# echo "table=${TABLE_ACL},cookie=0x${COOKIE},priority=300,ct_state=+rel,icmp,nw_src=${POD_IP},nw_dst=${PEER_IP},actions=goto_table:${TABLE_ROUTER}"
+
+	########################
+	# Table 50: Egress to Local Pods
+	########################
+	# (4)
+	echo "table=${TABLE_EGRESS_LOCAL_POD},cookie=0x${COOKIE},priority=100,ct_state=+est,udp,nw_dst=${POD_IP},nw_src=${PEER_IP},actions=output:${POD_PORT}"
+	# Allow related ICMP packets
+	# echo "table=${TABLE_EGRESS_LOCAL_POD},cookie=0x${COOKIE},priority=200,ct_state=+rel,icmp,nw_dst=${POD_IP},nw_src=${PEER_IP},actions=goto_table:${TABLE_ROUTER}"
 
 }
+
 
 # del_flows(){
 # 	# delete flows with cookies that exactly match
