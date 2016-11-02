@@ -61,10 +61,12 @@ sudo apt-get update
 #################
 # Misc Packages
 #################
+apt-get install -q -y dkms libpython-stdlib python python-minimal python-six python-doc python-tk
 apt-get install -q -y iperf netperf conntrack
+
 # apt-get install -q -y ipsec-tools racoon
 
 # apt-get install -q -y openvswitch-switch openvswitch-ipsec
-dpkg -i /vagrant/openvswitch/2.5.90/openvswitch-common_2.5.90-1_amd64.deb /vagrant/openvswitch/2.5.90/openvswitch-switch_2.5.90-1_amd64.deb
+dpkg -i /vagrant/openvswitch/2.6/openvswitch-common_2.6.0-1_amd64.deb /vagrant/openvswitch/2.6/openvswitch-switch_2.6.0-1_amd64.deb
 apt-get install -q -y dkms
-dpkg -i /vagrant/openvswitch/2.5.90/openvswitch-datapath-dkms_2.5.90-1_all.deb
+dpkg -i /vagrant/openvswitch/2.6/openvswitch-datapath-dkms_2.6.0-1_all.deb
