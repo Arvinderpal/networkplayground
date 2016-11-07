@@ -21,3 +21,4 @@ apt-get install -y binutils bcc bcc-tools libbcc-examples python-bcc
 # NOTE: not all packages installed, see other instructions:
 wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
 apt-get install -y git clang-3.8 lldb-3.8 
+apt install -y linux-tools-common linux-tools-generic linux-cloud-tools-generic

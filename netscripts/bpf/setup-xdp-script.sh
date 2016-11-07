@@ -10,4 +10,4 @@ set -eux
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get install -y python-pip
-pip install pyroute2
+pip install pyroute2 netaddr future 
