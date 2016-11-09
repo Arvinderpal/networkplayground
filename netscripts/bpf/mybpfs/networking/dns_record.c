@@ -94,6 +94,16 @@ int dns_record(struct __sk_buff *skb)
           if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
           if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
           if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
+          if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
+          if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
+          if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
+          if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
+          if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
+          if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
+          if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
+          if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
+          if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
+          if (cursor == sentinel) goto end; c = cursor_advance(cursor, 1); leaf->p[i++] = c->c;
           end:
           {}
       }

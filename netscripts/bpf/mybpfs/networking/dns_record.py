@@ -5,6 +5,7 @@ from bcc import BPF
 from ctypes import *
 from sys import argv
 from time import sleep
+from netaddr import IPAddress
 
 import sys
 import socket
@@ -95,15 +96,16 @@ def print_leaf_value(v):
         sys.stdout.write( '%s' % chr(v.p[x]) )
     sys.stdout.flush()
 
-
 incoming = bpf.get_table("incoming")
 
 while True:
     print ("dump: ")
     for k, v in incoming.items():
-        print("Key %d : " % k.id)
-        print(" -  %d : " % k.src_ip, k.id)
+        out = "Key: " + str(k.id) + "IP: " + str(IPAddress(k.src_ip)) + " Query: "
+        # print("Key %d IP: %s: " % k.id, str(IPAddress(k.src_ip)) )
+        sys.stdout.write( '%s' % out )
         print_leaf_value(v)
         # print(" Value %s%s%s%s: " % v.p[0], v.p[1], v.p[2], v.p[3])
         print("\n")
+    print("\n----------------------\n")
     sleep(5)
