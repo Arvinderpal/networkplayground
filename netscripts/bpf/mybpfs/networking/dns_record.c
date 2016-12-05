@@ -47,6 +47,11 @@ struct Leaf {
 
 BPF_TABLE("hash", struct Key, struct Leaf, incoming, 1024);
 
+int entry(void)
+{
+	return 1;
+}
+
 int dns_record(struct __sk_buff *skb)
 { 
     u8 *cursor = 0;
@@ -62,7 +67,7 @@ int dns_record(struct __sk_buff *skb)
       cursor_advance(cursor, hlen_bytes - sizeof(*ip));
       
       if(ip->nextp == IPPROTO_UDP) {
-      	bpf_trace_printk("IP UDP packet received \r\n");
+      	bpf_trace_printk("UDP packet received \r\n");
         
         // Add Key just for now based on src_ip and ip id.
         key.src_ip = ip->src;

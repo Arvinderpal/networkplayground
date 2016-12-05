@@ -80,22 +80,44 @@ if [[ $HOST_NAME =~ "etcd-01" ]] ; then
 	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/allow-ingress-same-host-$HOST_NAME.txt
 fi
 
-# allow ns2 on etcd-2 and ns1 and ns2 etcd-03 to be on the "open" network
+
+# allow ns2 on etcd-1 and ns1/ns2 etcd-02 to be on the "open" network
 POLICY_UID="F000000000000000"
-if [[ $HOST_NAME =~ "etcd-02" ]] ; then 
-	MY_IP="10.1.2.3"
+if [[ $HOST_NAME =~ "etcd-01" ]] ; then 
+	MY_IP="10.1.1.3"
 	# $CMD_PATH/isolation_on_off.sh "on" $POLICY_UID $MY_IP ${MY_IP//.} "0" >> /tmp/isolation-off-$HOST_NAME.txt
 	$CMD_PATH/isolation_on_off.sh "off" $POLICY_UID $MY_IP ${MY_IP//.} "0" > /tmp/isolation-off-$HOST_NAME.txt
 	cat /tmp/isolation-off-$HOST_NAME.txt
 	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/isolation-off-$HOST_NAME.txt
 fi
-if [[ $HOST_NAME =~ "etcd-03" ]] ; then 
-	MY_IP="10.1.3.2"
+if [[ $HOST_NAME =~ "etcd-02" ]] ; then 
+	MY_IP="10.1.2.2"
 	$CMD_PATH/isolation_on_off.sh "off" $POLICY_UID $MY_IP ${MY_IP//.} "0" > /tmp/isolation-off-$HOST_NAME.txt
 
-	MY_IP="10.1.3.3"
+	MY_IP="10.1.2.3"
 	$CMD_PATH/isolation_on_off.sh "off" $POLICY_UID $MY_IP ${MY_IP//.} "0" >> /tmp/isolation-off-$HOST_NAME.txt
 
 	cat /tmp/isolation-off-$HOST_NAME.txt
 	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/isolation-off-$HOST_NAME.txt
 fi
+
+
+# # allow ns2 on etcd-2 and ns1 and ns2 etcd-03 to be on the "open" network
+# POLICY_UID="F000000000000000"
+# if [[ $HOST_NAME =~ "etcd-02" ]] ; then 
+# 	MY_IP="10.1.2.3"
+# 	# $CMD_PATH/isolation_on_off.sh "on" $POLICY_UID $MY_IP ${MY_IP//.} "0" >> /tmp/isolation-off-$HOST_NAME.txt
+# 	$CMD_PATH/isolation_on_off.sh "off" $POLICY_UID $MY_IP ${MY_IP//.} "0" > /tmp/isolation-off-$HOST_NAME.txt
+# 	cat /tmp/isolation-off-$HOST_NAME.txt
+# 	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/isolation-off-$HOST_NAME.txt
+# fi
+# if [[ $HOST_NAME =~ "etcd-03" ]] ; then 
+# 	MY_IP="10.1.3.2"
+# 	$CMD_PATH/isolation_on_off.sh "off" $POLICY_UID $MY_IP ${MY_IP//.} "0" > /tmp/isolation-off-$HOST_NAME.txt
+
+# 	MY_IP="10.1.3.3"
+# 	$CMD_PATH/isolation_on_off.sh "off" $POLICY_UID $MY_IP ${MY_IP//.} "0" >> /tmp/isolation-off-$HOST_NAME.txt
+
+# 	cat /tmp/isolation-off-$HOST_NAME.txt
+# 	ovs-ofctl -O OpenFlow14 --bundle add-flows $OVS_BRIDGE /tmp/isolation-off-$HOST_NAME.txt
+# fi

@@ -25,7 +25,7 @@ int veth_tx(struct __sk_buff *skb){
     }
     else {
       struct ifindex_leaf_t zleaf = {0};
-      struct ifindex_leaf_t *new_leaf = data.lookup_or_init(&src_mac, &zleaf);   
+      struct ifindex_leaf_t *new_leaf = state.lookup_or_init(&src_mac, &zleaf);   
       lock_xadd(&new_leaf->tx_pkts, 1);
       lock_xadd(&new_leaf->tx_bytes, skb->len); 	
     }
@@ -38,14 +38,14 @@ int veth_rx(struct __sk_buff *skb){
   ethernet: {
     struct ethernet_t *ethernet = cursor_advance(cursor, sizeof(*ethernet));
     u64 dst_mac = ethernet->dst;
-    struct ifindex_leaf_t *leaf = data.lookup(&dst_mac);
+    struct ifindex_leaf_t *leaf = state.lookup(&dst_mac);
     if (leaf) {
       lock_xadd(&leaf->rx_pkts, 1);
       lock_xadd(&leaf->rx_bytes, skb->len);
     }
     else {
       struct ifindex_leaf_t zleaf = {0};
-      struct ifindex_leaf_t *new_leaf = data.lookup_or_init(&dst_mac, &zleaf);   
+      struct ifindex_leaf_t *new_leaf = state.lookup_or_init(&dst_mac, &zleaf);   
       lock_xadd(&new_leaf->rx_pkts, 1);
       lock_xadd(&new_leaf->rx_bytes, skb->len); 	
     }

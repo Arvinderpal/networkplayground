@@ -70,17 +70,19 @@ if len(argv) > 3:
 
 # initialize BPF - load source code from http-parse-simple.c
 bpf = BPF(src_file = "dns_record.c", debug=0)
-# print(bpf.dump_func("dns_test"))
-
-#load eBPF program http_filter of type SOCKET_FILTER into the kernel eBPF vm
-#more info about eBPF program types
-#http://man7.org/linux/man-pages/man2/bpf.2.html
+# load bpf -- it's a socket filter
 f_dns = bpf.load_func("dns_record", BPF.SOCKET_FILTER)
-
-
-#create raw socket, bind it to eth0
-#attach bpf program to socket created
+# create a raw socket on eth0 and attach our bpf
 BPF.attach_raw_socket(f_dns, interface)
+
+
+# bytecode_str = bpf.dump_func("dns_record")
+# print(":".join("{:02x}".format(ord(c)) for c in bytecode_str))
+
+# # dump the BPF program
+# bpf.dump_func("dns_record")
+
+
 
 # Create first entry for foo.bar
 # key = cache.Key()
