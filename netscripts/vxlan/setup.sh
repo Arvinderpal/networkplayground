@@ -26,18 +26,20 @@ REMOTE2_SUBNET=$4
 REMOTE1_IP=$5 
 REMOTE2_IP=$6
 
-# BOX_IP=$7
-BOX_IP=''
-ETH_IP=`ifconfig $EXTERNAL_IF | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'`
-BR_IP=`ifconfig $OVS_BRIDGE | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'`
+# http://stackoverflow.com/questions/21336126/linux-bash-script-to-extract-ip-address
+ETH_IP=$(ip route get 8.8.8.8 | awk '/8.8.8.8/ {print $NF}')
 if [ -z "$ETH_IP" ]
 then
-	BOX_IP=$BR_IP
-else
-  	BOX_IP=$ETH_IP
-fi     
+	echo "ERROR: no host IP found on physical interface or on OVS bridge port"
+	exit 1
+fi
 
+BOX_IP=$ETH_IP
 echo "BOX IP: ${BOX_IP}"
+
+# let's store the gateway route as setting EXTERNAL_IF to 0 will likely auto delete the route
+read _ _ HOST_DEFAULT_GW_IP _ < <(ip route list match 0/0)
+echo $HOST_DEFAULT_GW_IP
 
 # FLOATING_IP="172.16.60.235"
 # FLOATING_IP="10.1.1.235"
@@ -55,8 +57,18 @@ ovs-vsctl set bridge $OVS_BRIDGE protocols=OpenFlow10,OpenFlow11,OpenFlow12,Open
 
 # Create external interface
 ovs-vsctl --may-exist add-port $OVS_BRIDGE $EXTERNAL_IF -- set interface $EXTERNAL_IF ofport_request=$EXTERNAL_PORT
-ifconfig $EXTERNAL_IF 0
-ifconfig $OVS_BRIDGE "${BOX_IP}/24" up
+
+ip addr flush dev $EXTERNAL_IF
+#ifconfig $OVS_BRIDGE "${BOX_IP}/24" up
+ip address add "${BOX_IP}/24" dev $OVS_BRIDGE
+ip link set $OVS_BRIDGE up
+
+# adding default route to gateway
+if [ -z "$HOST_DEFAULT_GW_IP" ]; then
+	echo "ERROR: no default route to gateway found"
+	exit 1
+fi
+ip route add default via $HOST_DEFAULT_GW_IP
 
 # Create tunnel 
 ovs-vsctl --may-exist add-port $OVS_BRIDGE vxlan0 -- set interface vxlan0 \
@@ -69,13 +81,9 @@ ovs-vsctl --may-exist add-port $OVS_BRIDGE $CLUSTERSUBNETGW_IF -- set interface 
 	type=internal \
 	ofport_request=$CLUSTERSUBNETGW_PORT
 CLUSTER_SUBNET_GW=`echo  $HOST_SUBNET | awk -F '.' '{ print $1 "." $2 "." $3 "." 1 }'`
-ifconfig $CLUSTERSUBNETGW_IF "${CLUSTER_SUBNET_GW}/24" up
-
-# for eth0 we also add default route to egress gateway
-if [ "$EXTERNAL_IF" == "eth0" ]
-then
-	ip route add default via 172.16.60.2
-fi
+# ifconfig $CLUSTERSUBNETGW_IF "${CLUSTER_SUBNET_GW}/24" up
+ip address add "${CLUSTER_SUBNET_GW}/24" dev $CLUSTERSUBNETGW_IF
+ip link set $CLUSTERSUBNETGW_IF up
 
 # Enable IP Forwarding
 cat /proc/sys/net/ipv4/ip_forward

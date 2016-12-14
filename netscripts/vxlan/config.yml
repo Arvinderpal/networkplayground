@@ -1,39 +1,40 @@
 ---
 - name: etcd-01
-  box: slowe/ubuntu-trusty-x64
+  box: marcv81/xenial64
   ram: 512
   vcpu: 1
   clustersubnet: 10.1.0.0/16
-  priv_ip: 192.168.70.201
+  priv_ip: 192.168.80.201
   host_subnet: 10.1.1.0/24
   remote1_subnet: 10.1.2.0/24
   remote2_subnet: 10.1.3.0/24
-  remote1: 192.168.70.202
-  remote2: 192.168.70.203
+  remote1: 192.168.80.202
+  remote2: 192.168.80.203
   pod_ip_prefix: 10.1.1.
 - name: etcd-02
-  box: slowe/ubuntu-trusty-x64
+  box: marcv81/xenial64
   ram: 512
   vcpu: 1
   clustersubnet: 10.1.0.0/16
-  priv_ip: 192.168.70.202
+  priv_ip: 192.168.80.202
   host_subnet: 10.1.2.0/24
   remote1_subnet: 10.1.1.0/24
   remote2_subnet: 10.1.3.0/24
-  remote1: 192.168.70.201
-  remote2: 192.168.70.203
+  remote1: 192.168.80.201
+  remote2: 192.168.80.203
   pod_ip_prefix: 10.1.2.
-- name: etcd-03
-  box: slowe/ubuntu-trusty-x64
-  ram: 512
-  vcpu: 1
-  clustersubnet: 10.1.0.0/16
-  priv_ip: 192.168.70.203
-  host_subnet: 10.1.3.0/24
-  remote1_subnet: 10.1.1.0/24
-  remote2_subnet: 10.1.2.0/24
-  remote1: 192.168.70.201
-  remote2: 192.168.70.202
-  pod_ip_prefix: 10.1.3.
+# - name: etcd-03
+#   box: slowe/ubuntu-trusty-x64   or   ubuntu/trusty64
+#   ram: 512
+#   vcpu: 1
+#   clustersubnet: 10.1.0.0/16
+#   priv_ip: 192.168.80.203
+#   host_subnet: 10.1.3.0/24
+#   remote1_subnet: 10.1.1.0/24
+#   remote2_subnet: 10.1.2.0/24
+#   remote1: 192.168.80.201
+#   remote2: 192.168.80.202
+#   pod_ip_prefix: 10.1.3.
 
-  #   box: slowe/ubuntu-1404-x64-ovs
+# virtualbox images: ubuntu/trusty64 ubuntu/xenial64
+# vsphere images: slowe/ubuntu-trusty-x64
