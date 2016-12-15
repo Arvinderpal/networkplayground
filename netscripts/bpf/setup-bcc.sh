@@ -51,3 +51,5 @@ make install
 
 # tunnel demo
 apt-get install -y npm
+# from cilium:
+apt-get -y install socat curl jq realpath pv 

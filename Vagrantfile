@@ -60,12 +60,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       #   vb.gui = true
       #end
       
-      # Provision the VMs
-      srv.vm.provision "bootstrap", type:"shell", path: "provision.sh", privileged: true
-      
-      # ~~~~~~~~~~
-      # BPF stuff (1)
-      # ~~~~~~~~~~
+      #############
+      # BPF SCRIPTS (1): kernel 
+      #############
       # v up --provision-with setupkernel
       # If using ubuntu/xenial64: v up --provision-with setupkernel --provider virtualbox
 
@@ -73,7 +70,27 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       srv.vm.provision "setupkernel", type:"shell", path: "./netscripts/bpf/setup-kernel.sh", privileged: true
 
       #############
-      # SCRIPTS
+      # Basic Provisioning of VMs + OVS upgrade
+      #############
+      srv.vm.provision "bootstrap", type:"shell", path: "provision.sh", privileged: true
+      
+      #############
+      # BPF SCRIPTS (2): XDP
+      #############
+      # v reload --provision-with setupbcc,setupxdp,bootstrap
+      srv.vm.provision "setupbcc", type:"shell", path: "./netscripts/bpf/setup-bcc.sh", privileged: true
+      srv.vm.provision "setupxdp", type:"shell", path: "./netscripts/bpf/setup-xdp-script.sh", privileged: true
+
+      #############
+      # Regulus SCRIPTS
+      #############
+      # v reload --provision-with regulus
+      srv.vm.provision "regulus", type:"shell", path: "./netscripts/bpf/regulus-vagrant.sh", privileged: true
+
+
+
+      #############
+      # OVS SCRIPTS: 
       #############
       # NOTE: we have 2 scripts: setup and simple-network, both of these should
       # be run after the above "bootstrap" has been run and vms rebooted.
@@ -84,15 +101,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       
       srv.vm.provision "simplenetwork", type:"shell", path: "./netscripts/vxlan/simplenetwork.sh", args: [servers["name"], servers["pod_ip_prefix"], servers["host_subnet"], servers["priv_ip"]], privileged: true
 
-      # ~~~~~~~~~~
-      # BPF stuff (2) 
-      # ~~~~~~~~~~
-      # v reload --provision-with setupbcc,setupxdp,bootstrap
-      srv.vm.provision "setupbcc", type:"shell", path: "./netscripts/bpf/setup-bcc.sh", privileged: true
-      srv.vm.provision "setupxdp", type:"shell", path: "./netscripts/bpf/setup-xdp-script.sh", privileged: true
-
+      #############
       # OLD STUFF #
-
+      #############
       #srv.vm.provision "shell", path: "./netscripts/multihost_single_subnet_vxlan.sh", args: [servers["netns1_ip"], servers["remote1"], servers["remote2"]], privileged: true
       
       #srv.vm.provision "shell", path: "./netscripts/multihost_dual_subnet_vxlan_vnid_isolation.sh", args: [servers["pod1_ip"], servers["pod2_ip"],  servers["remotetun1_ip"], servers["remotetun2_ip"], servers["remote1"], servers["remote2"]], privileged: true
