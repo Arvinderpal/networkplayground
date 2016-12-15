@@ -18,7 +18,7 @@ import (
 	"os"
 	"path/filepath"
 
-	// "github.com/cilium/cilium/bpf/lxcmap"
+	"github.com/networkplayground/bpf/g1map"
 	"github.com/networkplayground/common"
 	"github.com/networkplayground/pkg/option"
 
@@ -88,11 +88,11 @@ func (d *Daemon) init() error {
 		* TODO(awander): create our map
 		*
 		 */
-		// d.conf.LXCMap, err = lxcmap.OpenMap(common.BPFMap)
-		// if err != nil {
-		// 	log.Warningf("Could not create BPF map '%s': %s", common.BPFMap, err)
-		// 	return err
-		// }
+		d.conf.G1Map, err = g1map.OpenMap(common.BPFG1Map)
+		if err != nil {
+			log.Warningf("Could not create BPF map '%s': %s", common.BPFG1Map, err)
+			return err
+		}
 		// if _, err := lbmap.Service6Map.OpenOrCreate(); err != nil {
 		// 	return err
 		// }

@@ -13,9 +13,9 @@ function regulus_setup(){
 	groupadd -f regulus
 	usermod -a -G regulus vagrant
 
-	echo 'cd /vagrant' >> /home/vagrant/.bashrc
+	echo 'REGULUS_HOME="/vagrant' >> /root/.bashrc
+	echo 'PATH=$PATH:"${REGULUS_HOME}/"' >> /root/.bashrc
 
-}
-
+	echo 'cd $REGULUS_HOME' >> /root/.bashrc
 
 regulus_setup

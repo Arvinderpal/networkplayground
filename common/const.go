@@ -30,7 +30,11 @@ const (
 	// BPFMap is the file that contains the BPF Map for the host.
 	BPFMapRoot     = "/sys/fs/bpf"
 	BPFRegulusMaps = BPFMapRoot + "/tc/globals"
-	BPFMap         = BPFRegulusMaps + "/regulus_lxc"
+
+	// G1Map:
+	BPFG1Map = BPFRegulusMaps + "/regulus_g1"
+	// max number of keys in the global G1 map
+	G1MapMaxKeys = 0xFFFF
 
 	// RFC3339Milli is the RFC3339 with milliseconds for the default timestamp format
 	// log files.

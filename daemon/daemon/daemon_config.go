@@ -15,6 +15,7 @@ package daemon
 import (
 	"sync"
 
+	"github.com/networkplayground/bpf/g1map"
 	"github.com/networkplayground/pkg/option"
 )
 
@@ -38,10 +39,10 @@ func init() {
 
 // Config is the configuration used by Daemon.
 type Config struct {
-	LibDir string // library directory
-	RunDir string // runtime directory
-	// LXCMap *lxcmap.LXCMap // LXCMap where all LXCs are stored
-	Device string // Receive device
+	LibDir string       // library directory
+	RunDir string       // runtime directory
+	G1Map  *g1map.G1Map // G1Map is one global bpf map, more can be defined
+	Device string       // Receive device
 
 	DryMode bool // Do not create BPF maps, devices, ..
 
