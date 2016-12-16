@@ -17,8 +17,9 @@ import (
 	"github.com/networkplayground/pkg/option"
 )
 
-type g1map interface {
+type gmaps interface {
 	G1MapInsert(map[string]string) error
+	G2MapUpdate(map[string]string) error
 }
 
 type control interface {
@@ -29,7 +30,7 @@ type control interface {
 
 // interface for both client and daemon.
 type RegulusBackend interface {
-	g1map
+	gmaps
 	control
 }
 

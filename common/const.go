@@ -31,10 +31,11 @@ const (
 	BPFMapRoot     = "/sys/fs/bpf"
 	BPFRegulusMaps = BPFMapRoot + "/tc/globals"
 
-	// G1Map:
-	BPFG1Map = BPFRegulusMaps + "/regulus_g1"
-	// max number of keys in the global G1 map
+	// Global Maps:
+	BPFG1Map     = BPFRegulusMaps + "/regulus_g1"
 	G1MapMaxKeys = 0xFFFF
+	BPFG2Map     = BPFRegulusMaps + "/regulus_g2"
+	G2MapMaxKeys = 0xFFFF
 
 	// RFC3339Milli is the RFC3339 with milliseconds for the default timestamp format
 	// log files.

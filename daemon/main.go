@@ -88,9 +88,15 @@ func init() {
 			},
 			{
 				Name:      "g1map",
-				Usage:     "Update G1Map with entries",
+				Usage:     "Insert entries in G1Map",
 				Action:    g1mapUpdate,
 				ArgsUsage: "[<key>=(value) ...]",
+			},
+			{
+				Name:      "g2map",
+				Usage:     "Update entries in G2Map",
+				Action:    g2mapUpdate,
+				ArgsUsage: "[<ipv4>=insert/delete ...]",
 			},
 		},
 	}
@@ -223,7 +229,7 @@ func g1mapUpdate(ctx *cli.Context) {
 	dOpts := make(map[string]string, len(opts))
 
 	for k := range opts {
-		name, value, err := ParseArgs(opts[k])
+		name, value, err := ParseArgsG1Map(opts[k])
 		if err != nil {
 			fmt.Printf("%s\n", err)
 			os.Exit(1)
@@ -239,6 +245,57 @@ func g1mapUpdate(ctx *cli.Context) {
 	}
 }
 
+func g2mapUpdate(ctx *cli.Context) {
+	var (
+		client *rclient.Client
+		err    error
+	)
+
+	first := ctx.Args().First()
+
+	if first == "list" {
+		// TODO(awander): add method to get all entries
+		// for k, s := range daemon.DaemonOptionLibrary {
+		// 	fmt.Printf("%-24s %s\n", k, s.Description)
+		// }
+		return
+	}
+
+	if host := ctx.GlobalString("host"); host == "" {
+		client, err = rclient.NewDefaultClient()
+	} else {
+		client, err = rclient.NewClient(host, nil)
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error while creating regulus-client: %s\n", err)
+		os.Exit(1)
+	}
+
+	opts := ctx.Args()
+
+	if len(opts) == 0 {
+		return
+	}
+
+	dOpts := make(map[string]string, len(opts))
+
+	for k := range opts {
+		name, value, err := ParseArgsG2Map(opts[k])
+		if err != nil {
+			fmt.Printf("%s\n", err)
+			os.Exit(1)
+		}
+
+		dOpts[name] = value
+
+		err = client.G2MapUpdate(dOpts)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to update daemon: %s\n", err)
+			os.Exit(1)
+		}
+	}
+}
 func initEnv(ctx *cli.Context) error {
 	config.OptsMU.Lock()
 	if ctx.GlobalBool("debug") {

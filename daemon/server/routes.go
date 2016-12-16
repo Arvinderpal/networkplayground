@@ -42,5 +42,8 @@ func (r *Router) initBackendRoutes() {
 		route{
 			"G1MapInsert", "POST", "/g1mapinsert", r.g1MapInsert,
 		},
+		route{
+			"G2MapUpdate", "POST", "/g2mapUpdate", r.g2MapUpdate,
+		},
 	}
 }

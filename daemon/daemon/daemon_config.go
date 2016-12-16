@@ -16,6 +16,7 @@ import (
 	"sync"
 
 	"github.com/networkplayground/bpf/g1map"
+	"github.com/networkplayground/bpf/g2map"
 	"github.com/networkplayground/pkg/option"
 )
 
@@ -42,7 +43,8 @@ func init() {
 type Config struct {
 	LibDir string       // library directory
 	RunDir string       // runtime directory
-	G1Map  *g1map.G1Map // G1Map is one global bpf map, more can be defined
+	G1Map  *g1map.G1Map // G1Map is one global bpf map
+	G2Map  *g2map.G2Map // G2Map is one global bpf map
 	Device string       // Receive device
 
 	DryMode bool // Do not create BPF maps, devices, ..
