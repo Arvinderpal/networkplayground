@@ -56,14 +56,14 @@ func (d *Daemon) writeNetdevHeader(dir string) error {
 	return fw.Flush()
 }
 
-func (d *Daemon) init() error {
+func (d *Daemon) init() (err error) {
 
 	globalsDir := filepath.Join(d.conf.RunDir, "globals")
-	if err := os.MkdirAll(globalsDir, 0755); err != nil {
+	if err = os.MkdirAll(globalsDir, 0755); err != nil {
 		log.Fatalf("Could not create runtime directory %s: %s", globalsDir, err)
 	}
 
-	if err := os.Chdir(d.conf.RunDir); err != nil {
+	if err = os.Chdir(d.conf.RunDir); err != nil {
 		log.Fatalf("Could not change to runtime directory %s: \"%s\"",
 			d.conf.RunDir, err)
 	}
@@ -88,6 +88,7 @@ func (d *Daemon) init() error {
 		* TODO(awander): create our map
 		*
 		 */
+		log.Info("Creating G1Map...")
 		d.conf.G1Map, err = g1map.OpenMap(common.BPFG1Map)
 		if err != nil {
 			log.Warningf("Could not create BPF map '%s': %s", common.BPFG1Map, err)

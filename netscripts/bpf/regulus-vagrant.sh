@@ -13,9 +13,17 @@ function regulus_setup(){
 	groupadd -f regulus
 	usermod -a -G regulus vagrant
 
-	echo 'REGULUS_HOME="/vagrant' >> /root/.bashrc
+
+	# VAGRANT_MOUNT_DIR=/vagrant/
+	# VAGRANT_MOUNT_DIR=/root/go/src/github.com/networkplayground
+
+	echo 'REGULUS_HOME="/root/go/src/github.com/networkplayground"' >> /root/.bashrc
 	echo 'PATH=$PATH:"${REGULUS_HOME}/"' >> /root/.bashrc
 
+	echo 'export GOPATH=/root/go' >> ~/.bashrc
+	echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.bashrc
+	
 	echo 'cd $REGULUS_HOME' >> /root/.bashrc
+}
 
 regulus_setup

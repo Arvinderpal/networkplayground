@@ -51,12 +51,19 @@ if [[ ! -e /etc/apt/sources.list.d/ubuntu-lxc-lxd-stable-trusty.list ]]; then
 fi
 
 # Update package list
-sudo apt-get update
+# sudo apt-get update
 
 # Install LXC/LXD if not already installed
 # if [[ ! -e /usr/bin/lxd ]]; then
 #     sudo apt-get -y install lxd
 # fi
+
+# ####
+# GO
+# #####
+add-apt-repository ppa:ubuntu-lxc/lxd-stable -y
+apt-get update
+apt-get install -y golang
 
 #################
 # Misc Packages
@@ -67,6 +74,10 @@ apt-get install -q -y iperf netperf conntrack
 # apt-get install -q -y ipsec-tools racoon
 
 # apt-get install -q -y openvswitch-switch openvswitch-ipsec
-dpkg -i /vagrant/openvswitch/2.6/openvswitch-common_2.6.0-1_amd64.deb /vagrant/openvswitch/2.6/openvswitch-switch_2.6.0-1_amd64.deb
-apt-get install -q -y dkms
-dpkg -i /vagrant/openvswitch/2.6/openvswitch-datapath-dkms_2.6.0-1_all.deb
+
+# NOTE: /vagrant will need to be changed if mount point for rsync is changed in Vagrantfile
+# VAGRANT_MOUNT_DIR=/vagrant/
+# VAGRANT_MOUNT_DIR=/root/go/src/github.com/networkplayground
+# dpkg -i $VAGRANT_MOUNT_DIR/openvswitch/2.6/openvswitch-common_2.6.0-1_amd64.deb $VAGRANT_MOUNT_DIR/openvswitch/2.6/openvswitch-switch_2.6.0-1_amd64.deb
+# apt-get install -q -y dkms
+# dpkg -i $VAGRANT_MOUNT_DIR/openvswitch/2.6/openvswitch-datapath-dkms_2.6.0-1_all.deb

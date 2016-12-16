@@ -53,9 +53,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       
       # Specify default synced folder; requires VMware Tools
       # Note shared folders are REQUIRED for the shell provisioning to work
-      srv.vm.synced_folder ".", "/vagrant", type: "rsync"
-      # srv.vm.synced_folder ".", "/vagrant", type: "nfs"
+      # rsync (if nfs does not work)
+      srv.vm.synced_folder ".", "/root/go/src/github.com/networkplayground", type: "rsync"
       
+      # NFS
+      #srv.vm.synced_folder ".", "/vagrant", type: "nfs"
+      #srv.vm.synced_folder '.', '/root/go/src/github.com/networkplayground', type: "nfs"
+      #srv.vm.synced_folder ".", "/root/go/src/github.com/networkplayground/regulus",
+      #  :nfs => true,
+      #  :mount_options => ['nolock,vers=3,noatime,fsc,actimeo=1']
+
       #srv.vm.provider "virtualbox" do |vb|
       #   vb.gui = true
       #end

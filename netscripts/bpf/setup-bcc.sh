@@ -29,13 +29,16 @@ apt-get install -y bc libssl-dev elfutils libelf-dev
 cd /usr/bin
 ln -s ../lib/llvm-3.8/bin/llc llc
 ln -s ../lib/llvm-3.8/bin/clang clang
+
 # install kernel sources 
+# VAGRANT_MOUNT_DIR=/vagrant/
+VAGRANT_MOUNT_DIR=/root/go/src/github.com/networkplayground
 KERNEL_VERSION=linux-4.9-rc5
 KERNEL_SRC_TAR=linux-4.9-rc5.tar.gz
 KERNEL_SRC_BASE_DIR=/home/vagrant/linux/
 mkdir -p $KERNEL_SRC_BASE_DIR
 cd $KERNEL_SRC_BASE_DIR
-cp /vagrant/netscripts/kernel/src/$KERNEL_SRC_TAR .
+cp $VAGRANT_MOUNT_DIR/netscripts/kernel/src/$KERNEL_SRC_TAR .
 tar -xf $KERNEL_SRC_TAR
 cd $KERNEL_VERSION
 make olddefconfig

@@ -1,0 +1,67 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "DIhhLfId4jP1kWUBkcuSM3NMmZc=",
+			"path": "github.com/codegangsta/cli",
+			"revision": "0bdeddeeb0f650497d603c4ad7b20cfe685682f6",
+			"revisionTime": "2016-11-22T04:36:10Z"
+		},
+		{
+			"checksumSHA1": "x77xUarDfVxctJMAJPCQzlYk8JM=",
+			"path": "github.com/fatih/color",
+			"revision": "bf82308e8c8546dc2b945157173eb8a959ae9505",
+			"revisionTime": "2016-10-25T12:05:01Z"
+		},
+		{
+			"checksumSHA1": "g/V4qrXjUGG9B+e3hB+4NAYJ5Gs=",
+			"path": "github.com/gorilla/context",
+			"revision": "08b5f424b9271eedf6f9f0ce86cb9396ed337a42",
+			"revisionTime": "2016-08-17T18:46:32Z"
+		},
+		{
+			"checksumSHA1": "urMd7A9QPAJYY0GZJL9qBhlUmD8=",
+			"path": "github.com/gorilla/mux",
+			"revision": "757bef944d0f21880861c2dd9c871ca543023cba",
+			"revisionTime": "2016-09-20T23:08:13Z"
+		},
+		{
+			"checksumSHA1": "I4njd26dG5hxFT2nawuByM4pxzY=",
+			"path": "github.com/mattn/go-colorable",
+			"revision": "d228849504861217f796da67fae4f6e347643f15",
+			"revisionTime": "2016-11-03T16:00:40Z"
+		},
+		{
+			"checksumSHA1": "xZuhljnmBysJPta/lMyYmJdujCg=",
+			"path": "github.com/mattn/go-isatty",
+			"revision": "30a891c33c7cde7b02a981314b4228ec99380cca",
+			"revisionTime": "2016-11-23T14:36:37Z"
+		},
+		{
+			"checksumSHA1": "BoXdUBWB8UnSlFlbnuTQaPqfCGk=",
+			"path": "github.com/op/go-logging",
+			"revision": "970db520ece77730c7e4724c61121037378659d9",
+			"revisionTime": "2016-03-15T20:05:05Z"
+		},
+		{
+			"checksumSHA1": "uR2JExVr6/6ZrBtvm7XguieokNI=",
+			"path": "golang.org/x/net/publicsuffix",
+			"revision": "31df19d69da8728e9220def59b80ee577c3e48bf",
+			"revisionTime": "2016-03-28T23:16:23Z"
+		},
+		{
+			"checksumSHA1": "uTQtOqR0ePMMcvuvAIksiIZxhqU=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "d75a52659825e75fff6158388dddc6a5b04f9ba5",
+			"revisionTime": "2016-12-14T18:38:57Z"
+		},
+		{
+			"checksumSHA1": "mkLQOQwQwoUc9Kr9+PaVGrKUzI4=",
+			"path": "gopkg.in/resty.v0",
+			"revision": "24dc7ba4bc1ef9215048b28e7248f99c42901db5",
+			"revisionTime": "2016-11-01T17:03:53Z"
+		}
+	],
+	"rootPath": "github.com/networkplayground"
+}
