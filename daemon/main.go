@@ -86,6 +86,12 @@ func init() {
 				Usage:  "Returns the daemon current status",
 				Action: statusDaemon,
 			},
+			{
+				Name:      "g1map",
+				Usage:     "Update G1Map with entries",
+				Action:    g1mapUpdate,
+				ArgsUsage: "[<key>=(value) ...]",
+			},
 		},
 	}
 }
@@ -174,6 +180,58 @@ func configDaemon(ctx *cli.Context) {
 		dOpts[name] = value
 
 		err = client.Update(dOpts)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to update daemon: %s\n", err)
+			os.Exit(1)
+		}
+	}
+}
+
+func g1mapUpdate(ctx *cli.Context) {
+	var (
+		client *rclient.Client
+		err    error
+	)
+
+	first := ctx.Args().First()
+
+	if first == "list" {
+		// TODO(awander): add method to get all G1Map entries
+		// for k, s := range daemon.DaemonOptionLibrary {
+		// 	fmt.Printf("%-24s %s\n", k, s.Description)
+		// }
+		return
+	}
+
+	if host := ctx.GlobalString("host"); host == "" {
+		client, err = rclient.NewDefaultClient()
+	} else {
+		client, err = rclient.NewClient(host, nil)
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error while creating regulus-client: %s\n", err)
+		os.Exit(1)
+	}
+
+	opts := ctx.Args()
+
+	if len(opts) == 0 {
+		return
+	}
+
+	dOpts := make(map[string]string, len(opts))
+
+	for k := range opts {
+		name, value, err := ParseArgs(opts[k])
+		if err != nil {
+			fmt.Printf("%s\n", err)
+			os.Exit(1)
+		}
+
+		dOpts[name] = value
+
+		err = client.G1MapInsert(dOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to update daemon: %s\n", err)
 			os.Exit(1)

@@ -1,6 +1,3 @@
-//
-// Copyright 2016 Authors of Cilium
-//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -13,34 +10,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-package server
+package daemon
 
 import (
-	"net/http"
+	"fmt"
+	"strings"
 )
 
-type route struct {
-	Name        string
-	Method      string
-	Pattern     string
-	HandlerFunc http.HandlerFunc
-}
+// will parse arguments into key and value string pair
+func ParseArgs(arg string) (string, string, error) {
 
-type routes []route
-
-func (r *Router) initBackendRoutes() {
-	r.routes = routes{
-		route{
-			"Ping", "GET", "/ping", r.ping,
-		},
-		route{
-			"GlobalStatus", "GET", "/healthz", r.globalStatus,
-		},
-		route{
-			"Update", "POST", "/update", r.update,
-		},
-		route{
-			"G1MapInsert", "POST", "/g1mapinsert", r.g1MapInsert,
-		},
+	optionSplit := strings.SplitN(arg, "=", 2)
+	key := optionSplit[0]
+	if len(optionSplit) > 1 {
+		return key, optionSplit[1], nil
 	}
+	return "", "", fmt.Errorf("No value specified for key: %s", optionSplit[0])
 }

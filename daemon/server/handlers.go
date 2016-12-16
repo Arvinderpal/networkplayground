@@ -56,3 +56,16 @@ func (router *Router) update(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusAccepted)
 }
+
+func (router *Router) g1MapInsert(w http.ResponseWriter, r *http.Request) {
+	var opts map[string]string
+	if err := json.NewDecoder(r.Body).Decode(&opts); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	if err := router.daemon.G1MapInsert(opts); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
+}

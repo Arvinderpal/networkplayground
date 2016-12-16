@@ -15,11 +15,14 @@ package daemon
 import (
 	"bufio"
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/networkplayground/bpf/g1map"
 	"github.com/networkplayground/common"
+	"github.com/networkplayground/pkg/mac"
 	"github.com/networkplayground/pkg/option"
 
 	// dClient "github.com/docker/engine-api/client"
@@ -148,6 +151,53 @@ func (d *Daemon) Update(opts option.OptionMap) error {
 	// 		log.Warningf("Unable to recompile base programs: %s\n", err)
 	// 	}
 	// }
+
+	return nil
+}
+
+func (d *Daemon) G1MapInsert(opts map[string]string) (err error) {
+
+	var id uint16
+	var mac_hw net.HardwareAddr
+
+	if d.conf.G1Map == nil {
+		d.conf.G1Map, err = g1map.OpenMap(common.BPFG1Map)
+		if err != nil {
+			log.Warningf("Could not create BPF map '%s': %s", common.BPFG1Map, err)
+			return err
+		}
+	}
+	// validate the new key and value pair
+	if len(opts) != 1 {
+		return fmt.Errorf("Can only insert one key/value at a time. Received: %d ", len(opts))
+	}
+	for k, v := range opts {
+		i, err := strconv.ParseInt(k, 10, 8)
+		if err != nil {
+			return fmt.Errorf("Key %v is not permittable: %v", k, err)
+		}
+		id = uint16(i)
+		mac_hw, err = net.ParseMAC(v)
+		if err != nil {
+			return fmt.Errorf("Invalid MAC %v: %v", v, err)
+		}
+		break
+	}
+
+	mac_m := mac.MAC(mac_hw)
+	entry, found := d.conf.G1Map.LookupElement(id)
+	if found {
+
+		log.Infof("Found key=%v: old/new v=%v/%v", id, entry.MAC, mac_m)
+		// do update here
+		return nil
+	}
+
+	// insert new entry in map
+	if err = d.conf.G1Map.Write(id, mac_m); err != nil {
+		log.Errorf("Insert in G1Map failed for k/v=%s/%s: %v", id, mac_m, err)
+		return err
+	}
 
 	return nil
 }

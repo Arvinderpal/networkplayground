@@ -36,3 +36,18 @@ func (cli Client) Update(opts option.OptionMap) error {
 
 	return nil
 }
+
+// Update sends a SET request to the daemon to update its configuration
+func (cli Client) G1MapInsert(opts map[string]string) error {
+	serverResp, err := cli.R().SetBody(opts).Post("/g1mapinsert")
+	if err != nil {
+		return fmt.Errorf("error while connecting to daemon: %s", err)
+	}
+
+	if serverResp.StatusCode() != http.StatusOK &&
+		serverResp.StatusCode() != http.StatusAccepted {
+		return processErrorBody(serverResp.Body(), nil)
+	}
+
+	return nil
+}

@@ -17,6 +17,10 @@ import (
 	"github.com/networkplayground/pkg/option"
 )
 
+type g1map interface {
+	G1MapInsert(map[string]string) error
+}
+
 type control interface {
 	Ping() (*types.PingResponse, error)
 	Update(opts option.OptionMap) error
@@ -25,6 +29,7 @@ type control interface {
 
 // interface for both client and daemon.
 type RegulusBackend interface {
+	g1map
 	control
 }
 

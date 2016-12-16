@@ -119,6 +119,17 @@ func (m *G1Map) DeleteElement(id uint16) error {
 	return err
 }
 
+func (m *G1Map) LookupElement(id uint16) (*G1Info, bool) {
+
+	var entry G1Info
+	key := uint32(id)
+	err := bpf.LookupElement(m.fd, unsafe.Pointer(&key), unsafe.Pointer(&entry))
+	if err != nil {
+		return nil, false
+	}
+	return &entry, true
+}
+
 // OpenMap opens the G1Map in the given path.
 func OpenMap(path string) (*G1Map, error) {
 

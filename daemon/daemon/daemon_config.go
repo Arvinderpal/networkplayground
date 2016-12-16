@@ -31,6 +31,7 @@ var (
 	DaemonOptionLibrary = option.OptionLibrary{
 		OptionPolicyTracing: &OptionSpecPolicyTracing,
 	}
+
 	kvBackend = ""
 )
 
