@@ -20,6 +20,9 @@ import (
 type gmaps interface {
 	G1MapInsert(map[string]string) error
 	G2MapUpdate(map[string]string) error
+	G3MapUpdate(map[string]string) error
+	G3MapDump() (string, error)
+	G3MapDelete(string) error
 }
 
 type control interface {

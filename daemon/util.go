@@ -39,3 +39,13 @@ func ParseArgsG2Map(arg string) (string, string, error) {
 	}
 	return "", "", fmt.Errorf("Invalid key/value specified")
 }
+
+func ParseArgsG3MapUpdate(arg string) (string, string, error) {
+
+	optionSplit := strings.SplitN(arg, "=", 2)
+	key := optionSplit[0]
+	if len(optionSplit) > 1 {
+		return key, optionSplit[1], nil
+	}
+	return "", "", fmt.Errorf("Invalid key/value specified")
+}

@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"text/tabwriter"
 
 	common "github.com/networkplayground/common"
@@ -94,9 +95,15 @@ func init() {
 			},
 			{
 				Name:      "g2map",
-				Usage:     "Update entries in G2Map",
+				Usage:     "List, Update entries in G2Map",
 				Action:    g2mapUpdate,
-				ArgsUsage: "[<ipv4>=insert/delete ...]",
+				ArgsUsage: "[<list>, <update><ipv4>=insert/delete ...]",
+			},
+			{
+				Name:      "g3map",
+				Usage:     "List, Update, Delete entries in G3Map",
+				Action:    g3mapUpdate,
+				ArgsUsage: "[<list>, <update><ipv4>=<init count>..., <delete><ipv4>...]",
 			},
 		},
 	}
@@ -251,16 +258,6 @@ func g2mapUpdate(ctx *cli.Context) {
 		err    error
 	)
 
-	first := ctx.Args().First()
-
-	if first == "list" {
-		// TODO(awander): add method to get all entries
-		// for k, s := range daemon.DaemonOptionLibrary {
-		// 	fmt.Printf("%-24s %s\n", k, s.Description)
-		// }
-		return
-	}
-
 	if host := ctx.GlobalString("host"); host == "" {
 		client, err = rclient.NewDefaultClient()
 	} else {
@@ -269,6 +266,20 @@ func g2mapUpdate(ctx *cli.Context) {
 
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while creating regulus-client: %s\n", err)
+		os.Exit(1)
+	}
+
+	first := ctx.Args().First()
+	if first == "list" {
+		// if err := dumpG2Map(client); err != nil {
+		// 	fmt.Errorf("Could not list G2Map: %s", err)
+		// 	os.Exit(1)
+		// }
+		os.Exit(0)
+	} else if first == "update" {
+		// continue
+	} else {
+		fmt.Fprintf(os.Stderr, "%s is not a valid command\n", first)
 		os.Exit(1)
 	}
 
@@ -296,6 +307,85 @@ func g2mapUpdate(ctx *cli.Context) {
 		}
 	}
 }
+
+func g3mapUpdate(ctx *cli.Context) {
+	var (
+		client *rclient.Client
+		err    error
+	)
+
+	if host := ctx.GlobalString("host"); host == "" {
+		client, err = rclient.NewDefaultClient()
+	} else {
+		client, err = rclient.NewClient(host, nil)
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error while creating regulus-client: %s\n", err)
+		os.Exit(1)
+	}
+
+	opts := ctx.Args()
+	if len(opts) == 0 {
+		return
+	}
+	first := ctx.Args().First()
+	if first == "list" {
+		if err := dumpG3Map(client); err != nil {
+			fmt.Errorf("Could not list G2Map: %s", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	} else if first == "update" {
+		dOpts := make(map[string]string, len(opts))
+		if len(opts) != 2 {
+			fmt.Fprintf(os.Stderr, "Expected 2 options to g3map update but got: %s", len(opts))
+			os.Exit(1)
+		}
+		name, value, err := ParseArgsG3MapUpdate(opts[1])
+		if err != nil {
+			fmt.Printf("%s\n", err)
+			os.Exit(1)
+		}
+
+		dOpts[name] = value
+
+		err = client.G3MapUpdate(dOpts)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to update daemon: %s\n", err)
+			os.Exit(1)
+		}
+
+	} else if first == "delete" {
+		if len(opts) != 2 {
+			fmt.Fprintf(os.Stderr, "Expected 2 options to g3map delete but got: %s", len(opts))
+			os.Exit(1)
+		}
+		err = client.G3MapDelete(opts[1])
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error during delete: %s\n", err)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Fprintf(os.Stderr, "%s is not a valid command\n", first)
+		os.Exit(1)
+	}
+}
+
+func dumpG3Map(client *rclient.Client) error {
+
+	n, err := client.G3MapDump()
+	if err != nil {
+		return fmt.Errorf("Could not retrieve G2Map: %s\n", err)
+	}
+
+	strs := strings.Split(n, `\n`)
+	for _, s := range strs {
+		fmt.Println(s)
+	}
+	return nil
+}
+
 func initEnv(ctx *cli.Context) error {
 	config.OptsMU.Lock()
 	if ctx.GlobalBool("debug") {

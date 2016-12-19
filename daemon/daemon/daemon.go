@@ -22,6 +22,7 @@ import (
 
 	"github.com/networkplayground/bpf/g1map"
 	"github.com/networkplayground/bpf/g2map"
+	"github.com/networkplayground/bpf/g3map"
 	"github.com/networkplayground/common"
 	"github.com/networkplayground/pkg/mac"
 	"github.com/networkplayground/pkg/option"
@@ -103,9 +104,15 @@ func (d *Daemon) init() (err error) {
 			log.Warningf("Could not create BPF map '%s': %s", common.BPFG2Map, err)
 			return err
 		}
-		// if _, err := lbmap.Service6Map.OpenOrCreate(); err != nil {
-		// 	return err
-		// }
+
+		log.Info("Creating G2Map...")
+		// G3Map is a little different from g1/g2 in that it
+		// implements the bpf.MapKey and MapValue interface
+		// G3Map variable is a global variable
+		if _, err := g3map.G3Map.OpenOrCreate(); err != nil {
+			return err
+		}
+
 	}
 
 	return nil
@@ -205,63 +212,6 @@ func (d *Daemon) G1MapInsert(opts map[string]string) (err error) {
 		return err
 	}
 
-	return nil
-}
-
-func (d *Daemon) G2MapUpdate(opts map[string]string) (err error) {
-
-	var ip g2map.IPV4
-	var remove bool
-
-	if d.conf.G2Map == nil {
-		d.conf.G2Map, err = g2map.OpenMap(common.BPFG2Map)
-		if err != nil {
-			log.Warningf("Could not create BPF map '%s': %s", common.BPFG2Map, err)
-			return err
-		}
-	}
-	// validate the new key and value pair
-	if len(opts) != 1 {
-		return fmt.Errorf("Can only insert one key/value at a time. Received: %d ", len(opts))
-	}
-	for k, v := range opts {
-		ip, err = g2map.ParseIPV4(k)
-		if err != nil {
-			return fmt.Errorf("Key %v is not permittable: %v", k, err)
-		}
-		if v == "delete" {
-			remove = true
-		} else {
-			remove = false
-		}
-		break
-	}
-
-	_, found := d.conf.G2Map.LookupElement(ip)
-	if found {
-		log.Infof("Found key=%v", ip)
-	}
-	if remove {
-		// delete entry
-		if found {
-			log.Infof("Deleting entry for %s", ip)
-			if err = d.conf.G2Map.DeleteElement(ip); err != nil {
-				return err
-			}
-		} else {
-			return fmt.Errorf("No entry found for %s", ip)
-		}
-	} else {
-		// insert entry
-		if found {
-			// TODO(awander): entry exists, update it
-		} else {
-			if err = d.conf.G2Map.Write(ip); err != nil {
-				log.Errorf("Insert in G2Map failed for key=%s: %v", ip, err)
-				return err
-			}
-		}
-	}
 	return nil
 }
 

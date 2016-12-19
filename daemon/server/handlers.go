@@ -17,9 +17,12 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/networkplayground/pkg/option"
+
+	"github.com/gorilla/mux"
 )
 
 func (router *Router) ping(w http.ResponseWriter, r *http.Request) {
@@ -81,4 +84,49 @@ func (router *Router) g2MapUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusAccepted)
+}
+
+func (router *Router) g3MapUpdate(w http.ResponseWriter, r *http.Request) {
+	var opts map[string]string
+	if err := json.NewDecoder(r.Body).Decode(&opts); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	if err := router.daemon.G3MapUpdate(opts); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (router *Router) g3MapDel(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	ip, exists := vars["ip"]
+	if !exists {
+		processServerError(w, r, errors.New("server received delete without ip/key"))
+		return
+	}
+
+	if err := router.daemon.G3MapDelete(ip); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (router *Router) g3MapDump(w http.ResponseWriter, r *http.Request) {
+	dump, err := router.daemon.G3MapDump()
+	if err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	if dump == "" {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(dump); err != nil {
+		processServerError(w, r, err)
+		return
+	}
 }

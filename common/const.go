@@ -36,6 +36,8 @@ const (
 	G1MapMaxKeys = 0xFFFF
 	BPFG2Map     = BPFRegulusMaps + "/regulus_g2"
 	G2MapMaxKeys = 0xFFFF
+	BPFG3Map     = BPFRegulusMaps + "/regulus_g3"
+	G3MapMaxKeys = 0xFFFF
 
 	// RFC3339Milli is the RFC3339 with milliseconds for the default timestamp format
 	// log files.

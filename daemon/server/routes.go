@@ -43,7 +43,16 @@ func (r *Router) initBackendRoutes() {
 			"G1MapInsert", "POST", "/g1mapinsert", r.g1MapInsert,
 		},
 		route{
-			"G2MapUpdate", "POST", "/g2mapUpdate", r.g2MapUpdate,
+			"G2MapUpdate", "POST", "/g2map", r.g2MapUpdate,
+		},
+		route{
+			"G3MapUpdate", "POST", "/g3map", r.g3MapUpdate,
+		},
+		route{
+			"G3MapDump", "GET", "/g3maps", r.g3MapDump,
+		},
+		route{
+			"G3MapDel", "DELETE", "/g3map/{ip}", r.g3MapDel,
 		},
 	}
 }
