@@ -22,7 +22,8 @@ apt-get install -y binutils bcc bcc-tools libbcc-examples python-bcc
 wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
 apt-get install -y git clang-3.8 lldb-3.8 
 apt install -y linux-tools-common linux-tools-generic linux-cloud-tools-generic
-
+# this seems necessary on ubuntu for llvm/clang
+apt-get install -y libc6-dev-i386
 apt-get install -y bison flex libdb-dev
 # these are for the linux/samples/bcc
 apt-get install -y bc libssl-dev elfutils libelf-dev 
@@ -49,6 +50,7 @@ make samples/bpf/
 cd ~
 git clone git://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git
 cd iproute2/
+export HAVE_ELF=y
 make
 make install
 

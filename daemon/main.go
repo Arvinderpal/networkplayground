@@ -74,6 +74,12 @@ func init() {
 						Value:       common.RegulusSock,
 						Usage:       "Sets the socket path to listen for connections",
 					},
+					cli.StringFlag{
+						Destination: &config.Device,
+						Name:        "snoop-device, d",
+						Value:       "eth1",
+						Usage:       "Device to snoop on (default is eth1)",
+					},
 				},
 			},
 			{

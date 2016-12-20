@@ -46,6 +46,7 @@ type Config struct {
 	G1Map  *g1map.G1Map // G1Map is one global bpf map
 	G2Map  *g2map.G2Map // G2Map is one global bpf map
 	Device string       // Receive device
+	Tunnel string       // Tunnel mode
 
 	DryMode bool // Do not create BPF maps, devices, ..
 

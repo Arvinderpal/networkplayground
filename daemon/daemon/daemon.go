@@ -80,12 +80,12 @@ func (d *Daemon) init() (err error) {
 		*
 		 */
 
-		// d.conf.OptsMU.RLock()
-		// if err := d.compileBase(); err != nil {
-		// 	d.conf.OptsMU.RUnlock()
-		// 	return err
-		// }
-		// d.conf.OptsMU.RUnlock()
+		d.conf.OptsMU.RLock()
+		if err := d.compileBase(); err != nil {
+			d.conf.OptsMU.RUnlock()
+			return err
+		}
+		d.conf.OptsMU.RUnlock()
 
 		/*
 		*
@@ -215,7 +215,6 @@ func (d *Daemon) G1MapInsert(opts map[string]string) (err error) {
 	return nil
 }
 
-/*
 func (d *Daemon) compileBase() error {
 	var args []string
 	var mode string
@@ -230,16 +229,12 @@ func (d *Daemon) compileBase() error {
 			log.Warningf("Link %s does not exist: %s", d.conf.Device, err)
 			return err
 		}
+		mode = "direct"
 
-		if d.conf.LBMode {
-			mode = "lb"
-		} else {
-			mode = "direct"
-		}
-
-		args = []string{d.conf.LibDir, d.conf.RunDir, d.conf.NodeAddress.String(), d.conf.NodeAddress.IPv4Address.String(), mode, d.conf.Device}
+		args = []string{d.conf.LibDir, d.conf.RunDir, mode, d.conf.Device}
 	} else {
-		args = []string{d.conf.LibDir, d.conf.RunDir, d.conf.NodeAddress.String(), d.conf.NodeAddress.IPv4Address.String(), d.conf.Tunnel}
+		// TODO(awander): add tunnel support!
+		args = []string{d.conf.LibDir, d.conf.RunDir, d.conf.Tunnel}
 	}
 
 	out, err := exec.Command(filepath.Join(d.conf.LibDir, "init.sh"), args...).CombinedOutput()
@@ -253,4 +248,3 @@ func (d *Daemon) compileBase() error {
 
 	return nil
 }
-*/
