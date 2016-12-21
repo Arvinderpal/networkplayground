@@ -34,9 +34,6 @@ enum {
 	DBG_CAPTURE_DELIVERY,
 };
 
-// TODO(awander): remove this DEBUG:
-#define DEBUG
-
 #ifdef DEBUG
 #include "events.h"
 #include "utils.h"

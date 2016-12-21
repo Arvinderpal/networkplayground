@@ -16,7 +16,7 @@
 #include "lib/dbg.h"
 // #include "lib/drop.h"
 // #include "lib/lb.h"
-
+#include "misc/g3.h"
 
 static inline int handle_ipv4(struct __sk_buff *skb)
 {
@@ -24,7 +24,7 @@ static inline int handle_ipv4(struct __sk_buff *skb)
 	void *data = (void *) (long) skb->data;
 	void *data_end = (void *) (long) skb->data_end;
 	struct g3map_key key = {};
-	struct g3map_value *svc;
+	struct g3map_value *value;
 	struct iphdr *ip = data + ETH_HLEN;
 	struct csum_offset csum_off = {};
 	int l3_off, l4_off, ret;
@@ -35,8 +35,7 @@ static inline int handle_ipv4(struct __sk_buff *skb)
 	if (data + ETH_HLEN + sizeof(*ip) > data_end)
 		return DROP_INVALID;
 
-	// TODO(awander): how does trace work?
-	regulus_trace_capture(skb, DBG_CAPTURE_FROM_NETDEV, skb->ingress_ifindex);
+	// regulus_trace_capture(skb, DBG_CAPTURE_FROM_NETDEV, skb->ingress_ifindex);
 
 	nexthdr = ip->protocol;
 	key.address = ip->daddr;
@@ -45,11 +44,13 @@ static inline int handle_ipv4(struct __sk_buff *skb)
 	csum_l4_offset_and_flags(nexthdr, &csum_off);
 
 
-	// svc = lb4_lookup_service(skb, &key);
-	// if (svc == NULL) {
-	// 	/* Pass packets to the stack which should not be loadbalanced */
-	// 	return TC_ACT_OK;
-	// }
+	value = g3_lookup_value(skb, &key);
+	if (value == NULL) {
+		/* Pass packets to the stack which should not be loadbalanced */
+		return TC_ACT_OK;
+	}
+	value->count = value->count + 1;
+
 	// slave = lb_select_slave(skb, svc->count);
 	// if (!(svc = lb4_lookup_slave(skb, &key, slave)))
 	// 	return DROP_NO_SERVICE;
