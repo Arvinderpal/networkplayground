@@ -19,9 +19,12 @@ function regulus_setup(){
 
 	echo 'REGULUS_HOME="/root/go/src/github.com/networkplayground"' >> /root/.bashrc
 	echo 'PATH=$PATH:"${REGULUS_HOME}/"' >> /root/.bashrc
+	# bpf/ contains scripts like init.sh
+	# ideally we should move this scripts to dir like /usr/local/bin
+	echo 'PATH=$PATH:"${REGULUS_HOME}/bpf"' >> /root/.bashrc
 
 	echo 'export GOPATH=/root/go' >> ~/.bashrc
-	echo 'export PATH=$PATH:$GOPATH/bin' >> ~/.bashrc
+	echo 'export PATH=$PATH:.:$GOPATH/bin' >> ~/.bashrc
 	
 	echo 'cd $REGULUS_HOME' >> /root/.bashrc
 }

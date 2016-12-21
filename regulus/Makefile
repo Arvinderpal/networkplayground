@@ -11,7 +11,7 @@ clean:
 	go clean
 	rm -f $(TARGET)
 
-SOURCES := $(shell find ../bpf ../daemon ../common ../pkg . -name '*.go')
+SOURCES := $(shell find monitor/ ../bpf ../daemon ../common ../pkg . -name '*.go')
 
 $(TARGET): $(SOURCES)
 	go build -ldflags "-X "github.com/networkplayground/common".Version=$(VERSION)" -o $(TARGET) ./main.go

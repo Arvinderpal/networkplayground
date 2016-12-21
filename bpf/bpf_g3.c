@@ -13,7 +13,7 @@
 // #include "lib/ipv6.h"
 // #include "lib/l4.h"
 // #include "lib/eth.h"
-// #include "lib/dbg.h"
+#include "lib/dbg.h"
 // #include "lib/drop.h"
 // #include "lib/lb.h"
 
@@ -36,7 +36,7 @@ static inline int handle_ipv4(struct __sk_buff *skb)
 		return DROP_INVALID;
 
 	// TODO(awander): how does trace work?
-	// cilium_trace_capture(skb, DBG_CAPTURE_FROM_LB, skb->ingress_ifindex);
+	regulus_trace_capture(skb, DBG_CAPTURE_FROM_NETDEV, skb->ingress_ifindex);
 
 	nexthdr = ip->protocol;
 	key.address = ip->daddr;

@@ -30,6 +30,8 @@ const (
 	// BPFMap is the file that contains the BPF Map for the host.
 	BPFMapRoot     = "/sys/fs/bpf"
 	BPFRegulusMaps = BPFMapRoot + "/tc/globals"
+	// Debug Events
+	BPFRegulusEventMap = BPFMapRoot + "/tc/globals/regulus_events"
 
 	// Global Maps:
 	BPFG1Map     = BPFRegulusMaps + "/regulus_g1"

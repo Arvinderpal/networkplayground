@@ -11,6 +11,19 @@
 
 typedef __u64 mac_t;
 
+enum {
+	REGULUS_NOTIFY_UNSPEC,
+	REGULUS_NOTIFY_DROP,
+	REGULUS_NOTIFY_DBG_MSG,
+	REGULUS_NOTIFY_DBG_CAPTURE,
+};
+
+#define NOTIFY_COMMON_HDR \
+	__u8		type; \
+	__u8		subtype; \
+	__u16		source; \
+	__u32		hash;
+
 /* Regulus error codes, must NOT overlap with TC return codes */
 #define DROP_INVALID_SMAC	-130
 #define DROP_INVALID_DMAC	-131

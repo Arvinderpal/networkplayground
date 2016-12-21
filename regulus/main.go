@@ -17,6 +17,7 @@ import (
 
 	"github.com/networkplayground/common"
 	daemon "github.com/networkplayground/daemon"
+	"github.com/networkplayground/regulus/monitor"
 
 	"github.com/codegangsta/cli"
 	l "github.com/op/go-logging"
@@ -44,6 +45,7 @@ func main() {
 	}
 	app.Commands = []cli.Command{
 		daemon.CliCommand,
+		monitor.CliCommand,
 	}
 	app.Before = initEnv
 	app.Run(os.Args)

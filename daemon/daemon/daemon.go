@@ -17,8 +17,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/networkplayground/bpf/g1map"
 	"github.com/networkplayground/bpf/g2map"
@@ -28,7 +30,7 @@ import (
 	"github.com/networkplayground/pkg/option"
 	// dClient "github.com/docker/engine-api/client"
 	"github.com/op/go-logging"
-	// "github.com/vishvananda/netlink"
+	"github.com/vishvananda/netlink"
 	// k8s "k8s.io/client-go/1.5/kubernetes"
 	// k8sRest "k8s.io/client-go/1.5/rest"
 	// k8sClientCmd "k8s.io/client-go/1.5/tools/clientcmd"
@@ -237,6 +239,7 @@ func (d *Daemon) compileBase() error {
 		args = []string{d.conf.LibDir, d.conf.RunDir, d.conf.Tunnel}
 	}
 
+	//./init.sh /usr/lib/regulus /var/run/regulus direct eth1
 	out, err := exec.Command(filepath.Join(d.conf.LibDir, "init.sh"), args...).CombinedOutput()
 	if err != nil {
 		log.Warningf("Command execution %s %s failed: %s",

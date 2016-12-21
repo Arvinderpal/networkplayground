@@ -1,5 +1,7 @@
 #!/bin/bash
-# ./init.sh /usr/lib/regulus /var/run/regulus direct eth1 
+# ./init.sh . /var/run/regulus direct eth1
+# ./init.sh /root/go/src/github.com/networkplayground/bpf /var/run/regulus direct eth1
+# ./regulus daemon run -D /root/go/src/github.com/networkplayground/bpf --d eth1
 
 LIB=$1
 RUNDIR=$2
@@ -42,7 +44,9 @@ function bpf_compile()
 
 	tc qdisc del dev $DEV clsact 2> /dev/null || true
 	tc qdisc add dev $DEV clsact
+	
 	tc filter add dev $DEV ingress bpf da obj $OUT sec $5
+	# e.g. tc filter add dev eth1 ingress bpf da obj bpf_g3.o sec from-netdev
 }
 
 
@@ -77,7 +81,6 @@ if [ "$MODE" = "direct" ]; then
 
 		echo "$NATIVE_DEV" > $RUNDIR/device.state
 	fi
-
 else
 	FILE=$RUNDIR/device.state
 	if [ -f $FILE ]; then
