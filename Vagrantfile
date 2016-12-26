@@ -94,6 +94,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # v reload --provision-with regulus
       srv.vm.provision "regulus", type:"shell", path: "./netscripts/bpf/regulus-vagrant.sh", privileged: true
 
+      #############
+      # NATS Setup
+      #############
+      # v reload --provision-with nats
+      srv.vm.provision "nats", type:"shell", path: "./netscripts/bpf/nats_setup.sh", privileged: true
 
 
       #############

@@ -55,14 +55,14 @@ func receiveEvent(msg *bpf.PerfEventSample, cpu int) {
 	prefix := fmt.Sprintf("CPU %02d:", cpu)
 
 	data := msg.DataDirect()
-	if data[0] == bpf.REGULUS_DBG_MSG {
+	if data[0] == bpf.REGULUS_NOTIFY_DBG_MSG {
 		dm := bpf.DebugMsg{}
 		if err := binary.Read(bytes.NewReader(data), binary.LittleEndian, &dm); err != nil {
 			log.Warningf("Error while parsing debug message: %s\n", err)
 		} else {
 			dm.Dump(data, prefix)
 		}
-	} else if data[0] == bpf.REGULUS_DBG_CAPTURE {
+	} else if data[0] == bpf.REGULUS_NOTIFY_DBG_CAPTURE {
 		dc := bpf.DebugCapture{}
 		if err := binary.Read(bytes.NewReader(data), binary.LittleEndian, &dc); err != nil {
 			log.Warningf("Error while parsing debug capture message: %s\n", err)

@@ -11,6 +11,8 @@ MODE=$3
 # Only set if MODE = "direct" or "lb"
 NATIVE_DEV=$4
 
+DEBUG
+
 MOUNTPOINT="/sys/fs/bpf"
 
 set -e
@@ -49,10 +51,14 @@ function bpf_compile()
 	# e.g. tc filter add dev eth1 ingress bpf da obj bpf_g3.o sec from-netdev
 }
 
-
 # This directory was created by the daemon and contains the per container header file
 DIR="$PWD/globals"
-CLANG_OPTS="-D__NR_CPUS__=$(nproc) -O2 -target bpf -I$DIR -I. -I$LIB/include -DHANDLE_NS"
+if [ -z "$DEBUG" ]; then
+	CLANG_OPTS="-D__NR_CPUS__=$(nproc) -O2 -target bpf -I$DIR -I. -I$LIB/include -DHANDLE_NS -DDEBUG"
+else
+	CLANG_OPTS="-D__NR_CPUS__=$(nproc) -O2 -target bpf -I$DIR -I. -I$LIB/include -DHANDLE_NS"
+fi
+
 
 
 # TODO(awander): what is run_probes.sh? do we need it?

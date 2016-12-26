@@ -27,6 +27,7 @@ function regulus_setup(){
 	echo 'export PATH=$PATH:.:$GOPATH/bin' >> ~/.bashrc
 	
 	echo 'cd $REGULUS_HOME' >> /root/.bashrc
+
 }
 
 regulus_setup

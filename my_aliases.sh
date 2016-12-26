@@ -51,11 +51,12 @@ cd /usr/share/bcc
 ./regulus daemon g3map list
 ./regulus daemon g3map update 10.0.2.66=200
 ./regulus daemon g3map delete 10.0.2.66
+./regulus monitor
 ###########
 # Vagrant #
 ###########
 
-v up --provision-with setupkernel --provider virtualbox; v reload --provision-with bootstrap,setupbcc,setupxdp,regulus
+v up --provision-with setupkernel --provider virtualbox; v reload --provision-with bootstrap,setupbcc,setupxdp,nats,regulus
 v destroy -f
 v up --provision-with setupkernel --provider virtualbox; v reload --provision-with bootstrap,setupbcc,setupxdp; v reload --provision-with networksetup,simplenetwork
 
@@ -92,3 +93,13 @@ iperf -u -c 172.16.60.151
 
 conntrack -E -p tcp
 
+# UDP echo
+# server:
+socat -v PIPE udp-recvfrom:4222,fork 
+# client:
+socat - udp:localhost:4222
+
+# TCP echo
+socat -v tcp-l:4222,fork exec:'/bin/cat'
+# client:
+nc serverip 4222
