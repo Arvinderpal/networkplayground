@@ -14,6 +14,7 @@ const (
 )
 
 var (
+	debug   bool
 	samples [NUMBER_OF_SAMPLES]time.Duration
 )
 
@@ -25,6 +26,10 @@ func main() {
 	}
 	saddr := os.Args[1]
 	sport := os.Args[2]
+
+	if len(os.Args) > 3 && os.Args[3] != "" {
+		debug = true
+	}
 
 	buff := make([]byte, 2048)
 	conn, err := net.Dial("udp", saddr+":"+sport)
@@ -51,9 +56,10 @@ func do_echo(conn net.Conn, p []byte, i int, data string) {
 	if err != nil {
 		fmt.Printf("Some error %v\n", err)
 		os.Exit(1)
-	} // else {
-	//     fmt.Printf("%s\n", p)
-	// }
+	}
+	if debug {
+		fmt.Printf("%s\n", p)
+	}
 
 }
 

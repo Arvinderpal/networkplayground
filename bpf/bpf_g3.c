@@ -83,6 +83,33 @@ static inline int handle_ipv4(struct __sk_buff *skb)
 		ret = udp_xlate(skb, nexthdr, eth, ip, dport, sport, l3_off, l4_off, &csum_off);
 		if (IS_ERR(ret))
 			return ret;
+
+		if (data + l4_off + sizeof(struct udphdr) + 3 < data_end){
+			// let's write in the payload
+			__u16 dummychar = 0x6666;
+			__u16 originalchar = 0; 
+			__be32 sum = 0;
+			int payload_off = 0;
+			__u64 csum_flags = BPF_F_PSEUDO_HDR | BPF_F_MARK_MANGLED_0;
+			payload_off = l4_off + sizeof(struct udphdr);
+			ret = skb_load_bytes(skb, payload_off, &originalchar, sizeof(__u16));
+			if (IS_ERR(ret))
+				return ret;
+			
+			// NOTE(awander): sum approch didn't quite work...
+			// sum = csum_diff(&originalchar, sizeof(originalchar), &dummychar, sizeof(dummychar), 0);
+			if (csum_off.offset) {
+				if (csum_l4_replace(skb, l4_off, &csum_off, originalchar, dummychar, sizeof(dummychar) | csum_flags) < 0)
+					return DROP_CSUM_L4;
+			}
+			// regulus_trace(skb, DBG_GENERIC, originalchar, sum); 
+
+			ret = skb_store_bytes(skb, l4_off + sizeof(struct udphdr), &dummychar, 2, 0);
+			if (ret < 0)
+				return DROP_WRITE_ERROR;
+
+		}
+
 		return TC_ACT_REDIRECT;
 
 		// new_dst = svc->target;
@@ -127,8 +154,8 @@ int from_netdev(struct __sk_buff *skb)
 		// 			ret = DROP_WRITE_ERROR;
 		// #endif
 		regulus_trace_capture(skb, DBG_CAPTURE_DELIVERY, skb->ifindex);
-		return  redirect(skb->ifindex, 0);
-		// bpf_clone_redirect(skb, skb->ifindex, 0 /*egress*/);
+		return  clone_redirect(skb, skb->ifindex, 0 /*egress*/);
+		// return redirect(skb->ifindex, 0);
  	}
 
 	return TC_ACT_OK;
