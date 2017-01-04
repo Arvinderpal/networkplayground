@@ -58,3 +58,6 @@ make install
 apt-get install -y npm
 # from cilium:
 apt-get -y install socat curl jq realpath pv 
+# kernelscope
+apt-get install -y sqlite3
+apt-get install -y python-mysqldb
