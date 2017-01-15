@@ -41,12 +41,13 @@ func init() {
 
 // Config is the configuration used by Daemon.
 type Config struct {
-	LibDir string       // library directory
-	RunDir string       // runtime directory
-	G1Map  *g1map.G1Map // G1Map is one global bpf map
-	G2Map  *g2map.G2Map // G2Map is one global bpf map
-	Device string       // Receive device
-	Tunnel string       // Tunnel mode
+	LibDir         string       // library directory
+	RunDir         string       // runtime directory
+	G1Map          *g1map.G1Map // G1Map is one global bpf map
+	G2Map          *g2map.G2Map // G2Map is one global bpf map
+	Device         string       // Receive device
+	Tunnel         string       // Tunnel mode
+	DockerEndpoint string       // Docker endpoint
 
 	DryMode bool // Do not create BPF maps, devices, ..
 

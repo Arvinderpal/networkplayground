@@ -28,7 +28,10 @@ import (
 	"github.com/networkplayground/common"
 	"github.com/networkplayground/pkg/mac"
 	"github.com/networkplayground/pkg/option"
-	// dClient "github.com/docker/engine-api/client"
+
+	// dClient "github.com/docker/engine-api/client" -- DEPRECATED
+	dClient "github.com/docker/docker/client"
+	// dTypes "gi/thub.com/docker/docker/api/types"
 	"github.com/op/go-logging"
 	"github.com/vishvananda/netlink"
 	// k8s "k8s.io/client-go/1.5/kubernetes"
@@ -44,7 +47,13 @@ var (
 type Daemon struct {
 	// dockerClient *dClient.Client
 	// loadBalancer *types.LoadBalancer
-	conf *Config
+	conf         *Config
+	dockerClient *dClient.Client
+}
+
+func createDockerClient(endpoint string) (*dClient.Client, error) {
+	defaultHeaders := map[string]string{"User-Agent": "regulus"}
+	return dClient.NewClient(endpoint, "v1.21", nil, defaultHeaders)
 }
 
 func (d *Daemon) writeNetdevHeader(dir string) error {
@@ -107,7 +116,7 @@ func (d *Daemon) init() (err error) {
 			return err
 		}
 
-		log.Info("Creating G2Map...")
+		log.Info("Creating G3Map...")
 		// G3Map is a little different from g1/g2 in that it
 		// implements the bpf.MapKey and MapValue interface
 		// G3Map variable is a global variable
@@ -126,8 +135,14 @@ func NewDaemon(c *Config) (*Daemon, error) {
 		return nil, fmt.Errorf("Configuration is nil")
 	}
 
+	dockerClient, err := createDockerClient(c.DockerEndpoint)
+	if err != nil {
+		return nil, err
+	}
+
 	d := Daemon{
-		conf: c,
+		conf:         c,
+		dockerClient: dockerClient,
 	}
 
 	if err := d.init(); err != nil {

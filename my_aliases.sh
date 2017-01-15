@@ -56,7 +56,7 @@ cd /usr/share/bcc
 # Vagrant #
 ###########
 
-v up --provision-with setupkernel --provider virtualbox; v reload --provision-with bootstrap,setupbcc,setupxdp,nats,regulus
+v up --provision-with setupkernel --provider virtualbox; v reload --provision-with bootstrap,setupbcc,setupxdp,regulus
 v destroy -f
 v up --provision-with setupkernel --provider virtualbox; v reload --provision-with bootstrap,setupbcc,setupxdp; v reload --provision-with networksetup,simplenetwork
 

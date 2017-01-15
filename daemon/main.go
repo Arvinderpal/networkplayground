@@ -80,6 +80,12 @@ func init() {
 						Value:       "eth1",
 						Usage:       "Device to snoop on (default is eth1)",
 					},
+					cli.StringFlag{
+						Destination: &config.DockerEndpoint,
+						Name:        "e",
+						Value:       "unix:///var/run/docker.sock",
+						Usage:       "Register a listener for docker events on the given endpoint",
+					},
 				},
 			},
 			{
@@ -424,6 +430,12 @@ func run(cli *cli.Context) {
 		log.Fatalf("Error while creating daemon: %s", err)
 		return
 	}
+
+	// Register event listener in docker endpoint
+	if err := d.EnableDockerEventListener(); err != nil {
+		log.Warningf("Error while enabling docker event watcher %s", err)
+	}
+	go d.EnableDockerSync(false)
 
 	server, err := s.NewServer(socketPath, d)
 	if err != nil {
