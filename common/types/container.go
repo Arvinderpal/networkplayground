@@ -1,6 +1,3 @@
-//
-// Copyright 2016 Authors of Cilium
-//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -13,9 +10,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-package daemon
+package types
 
-func (d *Daemon) GlobalStatus() (string, error) {
-	logger.Infof("Received Staus Request...")
-	return "Ok!", nil
+import (
+	dTypes "github.com/docker/docker/api/types"
+	// k8sDockerLbls "k8s.io/client-go/1.5/pkg/kubelet/types"
+)
+
+type Container struct {
+	dTypes.ContainerJSON
+	// OpLabels labels.OpLabels
+	// NRetries uintt
 }
+
+// func (c *Container) IsDockerOrInfracontainer() bool {
+// 	if c.Config != nil {
+// 		contName, exists := c.Config.Labels[k8sDockerLbls.KubernetesContainerNameLabel]
+// 		return !exists || contName == "POD"
+// 	}
+// 	return false
+// }

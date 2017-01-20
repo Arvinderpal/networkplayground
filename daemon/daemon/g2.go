@@ -27,7 +27,7 @@ func (d *Daemon) G2MapUpdate(opts map[string]string) (err error) {
 	if d.conf.G2Map == nil {
 		d.conf.G2Map, err = g2map.OpenMap(common.BPFG2Map)
 		if err != nil {
-			log.Warningf("Could not create BPF map '%s': %s", common.BPFG2Map, err)
+			logger.Warningf("Could not create BPF map '%s': %s", common.BPFG2Map, err)
 			return err
 		}
 	}
@@ -50,12 +50,12 @@ func (d *Daemon) G2MapUpdate(opts map[string]string) (err error) {
 
 	_, found := d.conf.G2Map.LookupElement(ip)
 	if found {
-		log.Infof("Found key=%v", ip)
+		logger.Infof("Found key=%v", ip)
 	}
 	if remove {
 		// delete entry
 		if found {
-			log.Infof("Deleting entry for %s", ip)
+			logger.Infof("Deleting entry for %s", ip)
 			if err = d.conf.G2Map.DeleteElement(ip); err != nil {
 				return err
 			}
@@ -68,7 +68,7 @@ func (d *Daemon) G2MapUpdate(opts map[string]string) (err error) {
 			// TODO(awander): entry exists, update it
 		} else {
 			if err = d.conf.G2Map.Write(ip); err != nil {
-				log.Errorf("Insert in G2Map failed for key=%s: %v", ip, err)
+				logger.Errorf("Insert in G2Map failed for key=%s: %v", ip, err)
 				return err
 			}
 		}

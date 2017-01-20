@@ -21,11 +21,14 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/networkplayground/bpf/g1map"
 	"github.com/networkplayground/bpf/g2map"
 	"github.com/networkplayground/bpf/g3map"
 	"github.com/networkplayground/common"
+	"github.com/networkplayground/common/types"
+	"github.com/networkplayground/pkg/endpoint"
 	"github.com/networkplayground/pkg/mac"
 	"github.com/networkplayground/pkg/option"
 
@@ -40,15 +43,18 @@ import (
 )
 
 var (
-	log = logging.MustGetLogger("regulus-net")
+	logger = logging.MustGetLogger("regulus-net")
 )
 
 // Daemon is the rugulus daemon
 type Daemon struct {
-	// dockerClient *dClient.Client
-	// loadBalancer *types.LoadBalancer
-	conf         *Config
-	dockerClient *dClient.Client
+	containersMU      sync.RWMutex
+	endpointsMU       sync.RWMutex
+	containers        map[string]*types.Container
+	endpointsDocker   map[string]*endpoint.Endpoint
+	endpointsDockerEP map[string]*endpoint.Endpoint
+	conf              *Config
+	dockerClient      *dClient.Client
 }
 
 func createDockerClient(endpoint string) (*dClient.Client, error) {
@@ -75,11 +81,11 @@ func (d *Daemon) init() (err error) {
 
 	globalsDir := filepath.Join(d.conf.RunDir, "globals")
 	if err = os.MkdirAll(globalsDir, 0755); err != nil {
-		log.Fatalf("Could not create runtime directory %s: %s", globalsDir, err)
+		logger.Fatalf("Could not create runtime directory %s: %s", globalsDir, err)
 	}
 
 	if err = os.Chdir(d.conf.RunDir); err != nil {
-		log.Fatalf("Could not change to runtime directory %s: \"%s\"",
+		logger.Fatalf("Could not change to runtime directory %s: \"%s\"",
 			d.conf.RunDir, err)
 	}
 
@@ -103,20 +109,20 @@ func (d *Daemon) init() (err error) {
 		* TODO(awander): create our map
 		*
 		 */
-		log.Info("Creating G1Map...")
+		logger.Info("Creating G1Map...")
 		d.conf.G1Map, err = g1map.OpenMap(common.BPFG1Map)
 		if err != nil {
-			log.Warningf("Could not create BPF map '%s': %s", common.BPFG1Map, err)
+			logger.Warningf("Could not create BPF map '%s': %s", common.BPFG1Map, err)
 			return err
 		}
-		log.Info("Creating G2Map...")
+		logger.Info("Creating G2Map...")
 		d.conf.G2Map, err = g2map.OpenMap(common.BPFG2Map)
 		if err != nil {
-			log.Warningf("Could not create BPF map '%s': %s", common.BPFG2Map, err)
+			logger.Warningf("Could not create BPF map '%s': %s", common.BPFG2Map, err)
 			return err
 		}
 
-		log.Info("Creating G3Map...")
+		logger.Info("Creating G3Map...")
 		// G3Map is a little different from g1/g2 in that it
 		// implements the bpf.MapKey and MapValue interface
 		// G3Map variable is a global variable
@@ -141,12 +147,15 @@ func NewDaemon(c *Config) (*Daemon, error) {
 	}
 
 	d := Daemon{
-		conf:         c,
-		dockerClient: dockerClient,
+		conf:              c,
+		dockerClient:      dockerClient,
+		containers:        make(map[string]*types.Container),
+		endpointsDocker:   make(map[string]*endpoint.Endpoint),
+		endpointsDockerEP: make(map[string]*endpoint.Endpoint),
 	}
 
 	if err := d.init(); err != nil {
-		log.Fatalf("Error while initializing daemon: %s\n", err)
+		logger.Fatalf("Error while initializing daemon: %s\n", err)
 	}
 
 	/*
@@ -158,7 +167,7 @@ func NewDaemon(c *Config) (*Daemon, error) {
 	// 	return d.staleMapWalker(path)
 	// }
 	// if err := filepath.Walk(common.BPFCiliumMaps, walker); err != nil {
-	// 	log.Warningf("Error while scanning for stale maps: %s", err)
+	// 	logger.Warningf("Error while scanning for stale maps: %s", err)
 	// }
 
 	return &d, nil
@@ -178,7 +187,7 @@ func (d *Daemon) Update(opts option.OptionMap) error {
 	// changes := d.conf.Opts.Apply(opts, changedOption, d)
 	// if changes > 0 {
 	// 	if err := d.compileBase(); err != nil {
-	// 		log.Warningf("Unable to recompile base programs: %s\n", err)
+	// 		logger.Warningf("Unable to recompile base programs: %s\n", err)
 	// 	}
 	// }
 
@@ -193,7 +202,7 @@ func (d *Daemon) G1MapInsert(opts map[string]string) (err error) {
 	if d.conf.G1Map == nil {
 		d.conf.G1Map, err = g1map.OpenMap(common.BPFG1Map)
 		if err != nil {
-			log.Warningf("Could not create BPF map '%s': %s", common.BPFG1Map, err)
+			logger.Warningf("Could not create BPF map '%s': %s", common.BPFG1Map, err)
 			return err
 		}
 	}
@@ -218,14 +227,14 @@ func (d *Daemon) G1MapInsert(opts map[string]string) (err error) {
 	entry, found := d.conf.G1Map.LookupElement(id)
 	if found {
 
-		log.Infof("Found key=%v: old/new v=%v/%v", id, entry.MAC, mac_m)
+		logger.Infof("Found key=%v: old/new v=%v/%v", id, entry.MAC, mac_m)
 		// do update here
 		return nil
 	}
 
 	// insert new entry in map
 	if err = d.conf.G1Map.Write(id, mac_m); err != nil {
-		log.Errorf("Insert in G1Map failed for k/v=%s/%s: %v", id, mac_m, err)
+		logger.Errorf("Insert in G1Map failed for k/v=%s/%s: %v", id, mac_m, err)
 		return err
 	}
 
@@ -237,13 +246,13 @@ func (d *Daemon) compileBase() error {
 	var mode string
 
 	if err := d.writeNetdevHeader("./"); err != nil {
-		log.Warningf("Unable to write netdev header: %s\n", err)
+		logger.Warningf("Unable to write netdev header: %s\n", err)
 		return err
 	}
 
 	if d.conf.Device != "undefined" {
 		if _, err := netlink.LinkByName(d.conf.Device); err != nil {
-			log.Warningf("Link %s does not exist: %s", d.conf.Device, err)
+			logger.Warningf("Link %s does not exist: %s", d.conf.Device, err)
 			return err
 		}
 		mode = "direct"
@@ -257,10 +266,10 @@ func (d *Daemon) compileBase() error {
 	//./init.sh /usr/lib/regulus /var/run/regulus direct eth1
 	out, err := exec.Command(filepath.Join(d.conf.LibDir, "init.sh"), args...).CombinedOutput()
 	if err != nil {
-		log.Warningf("Command execution %s %s failed: %s",
+		logger.Warningf("Command execution %s %s failed: %s",
 			filepath.Join(d.conf.LibDir, "init.sh"),
 			strings.Join(args, " "), err)
-		log.Warningf("Command output:\n%s", out)
+		logger.Warningf("Command output:\n%s", out)
 		return err
 	}
 

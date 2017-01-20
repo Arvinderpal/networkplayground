@@ -47,10 +47,10 @@ func (d *Daemon) G3MapUpdate(opts map[string]string) (err error) {
 
 	// _, err = g3map.LookupElement(g3key)
 	// if err != nil {
-	// 	log.Infof("Error during lookup of key=%v: %s", ip, err)
+	// 	logger.Infof("Error during lookup of key=%v: %s", ip, err)
 	// }
 	if err = g3map.UpdateElement(g3key, g3value); err != nil {
-		log.Errorf("Update in G3Map failed for key=%s: %v", ip, err)
+		logger.Errorf("Update in G3Map failed for key=%s: %v", ip, err)
 		return err
 	}
 	return nil
@@ -58,7 +58,7 @@ func (d *Daemon) G3MapUpdate(opts map[string]string) (err error) {
 
 func (d *Daemon) G3MapDump() (string, error) {
 
-	log.Info("Dumping G3map...")
+	logger.Info("Dumping G3map...")
 	// NOTE: this assumes that the G3Map is already open
 	dump, err := g3map.G3MapDumpParser2String()
 	if err != nil {
@@ -69,7 +69,7 @@ func (d *Daemon) G3MapDump() (string, error) {
 
 func (d *Daemon) G3MapDelete(ip_str string) error {
 
-	log.Debugf("Delete request received for %s", ip_str)
+	logger.Debugf("Delete request received for %s", ip_str)
 	ip := net.ParseIP(ip_str)
 	if ip == nil {
 		return fmt.Errorf("Unable to parse key: %v", ip_str)
@@ -79,6 +79,6 @@ func (d *Daemon) G3MapDelete(ip_str string) error {
 	if err := g3map.DeleteElement(g3key); err != nil {
 		return err
 	}
-	log.Debugf("Successfully deleted: %s", ip_str)
+	logger.Debugf("Successfully deleted: %s", ip_str)
 	return nil
 }

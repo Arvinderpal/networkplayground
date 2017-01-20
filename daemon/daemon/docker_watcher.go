@@ -13,17 +13,14 @@
 package daemon
 
 import (
+	"fmt"
 	"io"
 	"strconv"
 	"sync"
 	"time"
 
-	// "github.com/networkplayground/common"
-	// "github.com/cilium/cilium/common/addressing"
-	// "github.com/cilium/cilium/common/ipam"
-	// "github.com/cilium/cilium/common/types"
-	// "github.com/cilium/cilium/pkg/endpoint"
-	// "github.com/cilium/cilium/pkg/labels"
+	"github.com/networkplayground/common/types"
+	"github.com/networkplayground/pkg/endpoint"
 
 	// dClient "github.com/docker/engine-api/client" -- DEPRECATED
 	dTypes "github.com/docker/docker/api/types"
@@ -45,13 +42,13 @@ const (
 // EnableDockerEventListener watches for docker events. Performs the plumbing for the
 // containers started or dead.
 func (d *Daemon) EnableDockerEventListener() error {
-	log.Infof("Starting docker event listener")
+	logger.Infof("Starting docker event listener")
 	eo := dTypes.EventsOptions{Since: strconv.FormatInt(time.Now().Unix(), 10)}
 	messages, errs := d.dockerClient.Events(ctx.Background(), eo)
 
 	d.EnableDockerSync(true)
 	go d.listenForEvents(messages, errs)
-	log.Infof("Listening for docker events")
+	logger.Infof("Listening for docker events")
 
 	return nil
 }
@@ -61,7 +58,7 @@ func (d *Daemon) EnableDockerSync(once bool) {
 	for {
 		cList, err := d.dockerClient.ContainerList(ctx.Background(), dTypes.ContainerListOptions{All: false})
 		if err != nil {
-			log.Errorf("Failed to retrieve the container list %s", err)
+			logger.Errorf("Failed to retrieve the container list %s", err)
 		}
 		for _, cont := range cList {
 			wg.Add(1)
@@ -85,16 +82,16 @@ func (d *Daemon) listenForEvents(messages <-chan dTypesEvents.Message, errs <-ch
 		select {
 		case err := <-errs:
 			if err != nil && err != io.EOF {
-				log.Errorf("Received an err from Docker client: %v", err)
+				logger.Errorf("Received an err from Docker client: %v", err)
 
 			}
 			if err == io.EOF {
 				// awander: should we just exit the go routine here...
-				log.Info("Recieved EOF from Docker client...exiting")
+				logger.Info("Recieved EOF from Docker client...exiting")
 				break
 			}
 		case e := <-messages:
-			log.Infof("Processing an event %+v", e)
+			logger.Infof("Processing an event %+v", e)
 			go d.processEvent(e)
 		}
 	}
@@ -112,37 +109,104 @@ func (d *Daemon) processEvent(m dTypesEvents.Message) {
 }
 
 func (d *Daemon) createContainer(dockerID string) {
-	log.Debugf("Processing create event for docker container %s", dockerID)
+	logger.Debugf("Processing create event for docker container %s", dockerID)
 
-	// d.containersMU.Lock()
-	// if isNewContainer, container, err := d.updateProbeLabels(dockerID); err != nil {
-	// 	d.containersMU.Unlock()
-	// 	log.Errorf("%s", err)
-	// } else {
-	// 	d.containersMU.Unlock()
-	// 	if err := d.updateContainer(container, isNewContainer); err != nil {
-	// 		log.Errorf("%s", err)
-	// 	}
-	// }
+	d.containersMU.Lock()
+	if isNewContainer, container, err := d.updateInternalState(dockerID); err != nil {
+		d.containersMU.Unlock()
+		logger.Errorf("%s", err)
+	} else {
+		d.containersMU.Unlock()
+		if err := d.updateContainer(container, isNewContainer); err != nil {
+			logger.Errorf("%s", err)
+		}
+	}
+}
+
+func (d *Daemon) updateInternalState(dockerID string) (bool, *types.Container, error) {
+	dockerCont, err := d.dockerClient.ContainerInspect(ctx.Background(), dockerID)
+	if err != nil {
+		return false, nil, fmt.Errorf("Error while inspecting container '%s': %s", dockerID, err)
+	}
+
+	isNewContainer := false
+	var cont *types.Container
+
+	if oldcont, ok := d.containers[dockerID]; !ok {
+		isNewContainer = true
+		cont = &types.Container{
+			ContainerJSON: dockerCont,
+		}
+	} else {
+		// we can update the existing container as needed here...
+		cont = oldcont
+	}
+
+	d.containers[dockerID] = cont
+
+	return isNewContainer, cont, nil
+}
+
+func (d *Daemon) updateContainer(container *types.Container, isNewContainer bool) error {
+	if container == nil {
+		return nil
+	}
+
+	dockerID := container.ID
+
+	var dockerEPID string
+	if container.ContainerJSON.NetworkSettings != nil {
+		dockerEPID = container.ContainerJSON.NetworkSettings.EndpointID
+	}
+
+	try := 1
+	maxTries := 5
+	var ep *endpoint.Endpoint
+	for try <= maxTries {
+		// wait for the orch system to make appropriate driver/cni calls
+		if ep = d.getEndpointAndUpdateIDs(dockerID, dockerEPID); ep != nil {
+			break
+		}
+		// if container.IsDockerOrInfracontainer() {
+		logger.Debugf("Waiting for orchestration system to request networking for container %s... [%d/%d]", dockerID, try, maxTries)
+		// }
+		time.Sleep(time.Duration(try) * time.Second)
+		try++
+	}
+	if try >= maxTries {
+		// if container.IsDockerOrInfracontainer() {
+		return fmt.Errorf("No manage request in time, container %s is likely managed by other networking plugin.", dockerID)
+		// }
+		return nil
+	}
+	if isNewContainer {
+		if err := d.createBPFMAPs(ep.DockerID); err != nil {
+			return fmt.Errorf("Unable to create & attach BPF programs for container %s: %s", dockerID, err)
+		}
+	}
+
+	logger.Infof("Updated container %s", dockerID)
+
+	return nil
 }
 
 func (d *Daemon) deleteContainer(dockerID string) {
-	log.Debugf("Processing deletion event for docker container %s", dockerID)
+	logger.Debugf("Processing deletion event for docker container %s", dockerID)
 
 	// d.containersMU.Lock()
 	// if container, ok := d.containers[dockerID]; ok {
 	// 	ep, err := d.EndpointGetByDockerID(dockerID)
 	// 	if err != nil {
-	// 		log.Warningf("Error while getting endpoint by docker ID: %s", err)
+	// 		logger.Warningf("Error while getting endpoint by docker ID: %s", err)
 	// 	}
 
 	// 	sha256sum, err := container.OpLabels.EndpointLabels.SHA256Sum()
 	// 	if err != nil {
-	// 		log.Errorf("Error while creating SHA256Sum for labels %+v: %s", container.OpLabels.EndpointLabels, err)
+	// 		logger.Errorf("Error while creating SHA256Sum for labels %+v: %s", container.OpLabels.EndpointLabels, err)
 	// 	}
 
 	// 	if err := d.DeleteLabelsBySHA256(sha256sum, dockerID); err != nil {
-	// 		log.Errorf("Error while deleting labels (SHA256SUM:%s) %+v: %s", sha256sum, container.OpLabels.EndpointLabels, err)
+	// 		logger.Errorf("Error while deleting labels (SHA256SUM:%s) %+v: %s", sha256sum, container.OpLabels.EndpointLabels, err)
 	// 	}
 
 	// 	delete(d.containers, dockerID)
@@ -159,14 +223,32 @@ func (d *Daemon) deleteContainer(dockerID string) {
 	// 		if d.conf.IPv4Enabled {
 	// 			ipv4 := ep.IPv4.IP()
 	// 			if err := d.ReleaseIP(ipamType, ipam.IPAMReq{IP: &ipv4}); err != nil {
-	// 				log.Warningf("error while releasing IPv4 %s: %s", ep.IPv4.IP(), err)
+	// 				logger.Warningf("error while releasing IPv4 %s: %s", ep.IPv4.IP(), err)
 	// 			}
 	// 		}
 	// 		ipv6 := ep.IPv6.IP()
 	// 		if err := d.ReleaseIP(ipamType, ipam.IPAMReq{IP: &ipv6}); err != nil {
-	// 			log.Warningf("error while releasing IPv6 %s: %s", ep.IPv6.IP(), err)
+	// 			logger.Warningf("error while releasing IPv6 %s: %s", ep.IPv6.IP(), err)
 	// 		}
 	// 	}
 	// }
 	// d.containersMU.Unlock()
+}
+
+func (d *Daemon) createBPFMAPs(epID string) error {
+	d.endpointsMU.Lock()
+	defer d.endpointsMU.Unlock()
+	return nil
+	// ep, ok := d.endpointsDocker[epID]
+	// if !ok {
+	// 	return fmt.Errorf("endpoint %d not found", epID)
+	// }
+
+	// err := d.regenerateBPF(ep, filepath.Join(".", strconv.Itoa(int(ep.ID))))
+	// if err != nil {
+	// 	ep.logStatus(endpoint.Failure, err.Error())
+	// } else {
+	// 	ep.logStatusOK("Regenerated BPF code")
+	// }
+	// return err
 }

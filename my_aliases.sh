@@ -4,8 +4,8 @@
 
 sudo su
 
-OVS_BRIDGE_NAME=ovs-br
-# OVS_BRIDGE_NAME=ovs-test
+# OVS_BRIDGE_NAME=ovs-br
+OVS_BRIDGE_NAME=ovsv1-br-cntm
 
 alias oof='sudo ovs-ofctl'
 alias ovs='sudo ovs-vsctl'

@@ -15,12 +15,14 @@
 //
 package daemon
 
-import "github.com/networkplayground/common/types"
+import (
+	"github.com/networkplayground/common/types"
+)
 
 func (d *Daemon) Ping() (*types.PingResponse, error) {
 	d.conf.OptsMU.RLock()
 	defer d.conf.OptsMU.RUnlock()
-	log.Info("Received Ping Request...")
+	logger.Infof("Received Ping Request...")
 	return &types.PingResponse{
 		NodeAddress: "not-an-address", //d.conf.NodeAddress.String(),
 		Opts:        d.conf.Opts,
