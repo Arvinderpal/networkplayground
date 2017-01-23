@@ -25,10 +25,10 @@ import (
 	"gopkg.in/resty.v0"
 )
 
-var log = l.MustGetLogger("regulus-net-client")
+var logger = l.MustGetLogger("regulus-net-client")
 
 func init() {
-	common.SetupLOG(log, "DEBUG")
+	common.SetupLOG(logger, "DEBUG")
 }
 
 // Client has the internal details necessary to talk with the daemon.
@@ -80,7 +80,7 @@ func NewClient(host string, transport *http.Transport) (*Client, error) {
 		r.SetHostURL(addr)
 	}
 
-	log.Debugf("Client talking with host: %s", host)
+	logger.Debugf("Client talking with host: %s", host)
 	return &Client{
 		r,
 	}, nil

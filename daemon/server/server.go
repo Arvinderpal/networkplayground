@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	log = logging.MustGetLogger("regulus-net")
+	logger = logging.MustGetLogger("regulus-net")
 )
 
 // Server listens for HTTP requests and sends them to our router.
@@ -65,7 +65,7 @@ func NewServer(socketPath string, daemon *daemon.Daemon) (Server, error) {
 				return nil, fmt.Errorf("failed while setting up %s's group ID in %q: %s", common.RegulusGroupName, socketPath, err)
 			}
 		} else {
-			log.Warningf("Group %s not found: %s", common.RegulusGroupName, err)
+			logger.Warningf("Group %s not found: %s", common.RegulusGroupName, err)
 		}
 		if err := os.Chmod(socketPath, 0660); err != nil {
 			return nil, fmt.Errorf("failed while setting up %s's file permissions in %q: %s", common.RegulusGroupName, socketPath, err)
@@ -77,7 +77,7 @@ func NewServer(socketPath string, daemon *daemon.Daemon) (Server, error) {
 
 // Start starts the server and blocks to server HTTP requests.
 func (d server) Start() error {
-	log.Infof("Listening on %q", d.socketPath)
+	logger.Infof("Listening on %q", d.socketPath)
 	return http.Serve(d.listener, d.router)
 }
 

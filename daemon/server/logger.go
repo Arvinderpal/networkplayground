@@ -24,7 +24,7 @@ func Logger(inner http.Handler, name string) http.Handler {
 
 		inner.ServeHTTP(w, r)
 
-		log.Debugf(
+		logger.Debugf(
 			"[SERVER] %s\t%s\t%s\t%s",
 			r.Method,
 			r.RequestURI,

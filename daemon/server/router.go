@@ -53,10 +53,10 @@ func processServerError(w http.ResponseWriter, r *http.Request, err error) {
 		Code: http.StatusInternalServerError,
 		Text: fmt.Sprintf("an unexpected internal error has occurred: \"%s\"", err),
 	}
-	log.Debugf("Processing error %s\n", sErr)
-	log.Errorf("Error while processing request '%+v': \"%s\"", r, err)
+	logger.Debugf("Processing error %s\n", sErr)
+	logger.Errorf("Error while processing request '%+v': \"%s\"", r, err)
 	if err := json.NewEncoder(w).Encode(sErr); err != nil {
-		log.Errorf("Error while encoding %T '%+v': \"%s\"", sErr, sErr, err)
+		logger.Errorf("Error while encoding %T '%+v': \"%s\"", sErr, sErr, err)
 		fmt.Fprintf(w, "Fatal error while processing request '%+v': \"%s\"", r, err)
 	}
 }

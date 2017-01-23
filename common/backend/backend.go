@@ -14,8 +14,22 @@ package backend
 
 import (
 	"github.com/networkplayground/common/types"
+	"github.com/networkplayground/pkg/endpoint"
 	"github.com/networkplayground/pkg/option"
 )
+
+type bpfBackend interface {
+	EndpointJoin(ep endpoint.Endpoint) error
+	EndpointLeave(dockerID string) error
+	EndpointGet(dockerID string) (*endpoint.Endpoint, error)
+
+	EndpointLeaveByDockerEPID(dockerEPID string) error
+	EndpointGetByDockerEPID(dockerEPID string) (*endpoint.Endpoint, error)
+
+	EndpointUpdate(dockerID string, opts option.OptionMap) error
+	EndpointSave(ep endpoint.Endpoint) error
+	EndpointsGet() ([]endpoint.Endpoint, error)
+}
 
 type gmaps interface {
 	G1MapInsert(map[string]string) error
@@ -33,6 +47,7 @@ type control interface {
 
 // interface for both client and daemon.
 type RegulusBackend interface {
+	bpfBackend
 	gmaps
 	control
 }

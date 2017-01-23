@@ -54,5 +54,31 @@ func (r *Router) initBackendRoutes() {
 		route{
 			"G3MapDel", "DELETE", "/g3map/{ip}", r.g3MapDel,
 		},
+
+		// endpoint handlers:
+		route{
+			"EndpointCreate", "POST", "/endpoint/{dockerID}", r.endpointCreate,
+		},
+		route{
+			"EndpointDelete", "DELETE", "/endpoint/{dockerID}", r.endpointDelete,
+		},
+		route{
+			"EndpointGet", "GET", "/endpoint/{dockerID}", r.endpointGet,
+		},
+		route{
+			"EndpointUpdate", "POST", "/endpoint/update/{dockerID}", r.endpointUpdate,
+		},
+		route{
+			"EndpointSave", "POST", "/endpoint/save/{dockerID}", r.endpointSave,
+		},
+		route{
+			"EndpointLeaveByDockerEPID", "DELETE", "/endpoint-by-docker-ep-id/{dockerEPID}", r.endpointLeaveByDockerEPID,
+		},
+		route{
+			"EndpointGetByDockerEPID", "GET", "/endpoint-by-docker-ep-id/{dockerEPID}", r.endpointGetByDockerEPID,
+		},
+		route{
+			"EndpointsGet", "GET", "/endpoints", r.endpointsGet,
+		},
 	}
 }

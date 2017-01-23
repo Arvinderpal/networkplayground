@@ -176,3 +176,20 @@ func (e *Endpoint) DeepCopy() *Endpoint {
 
 	return cpy
 }
+
+func (ep *Endpoint) SetDefaultOpts(opts *option.BoolOptions) {
+	// if ep.Opts == nil {
+	// 	ep.Opts = option.NewBoolOptions(&EndpointOptionLibrary)
+	// }
+	// if ep.Opts.Library == nil {
+	// 	ep.Opts.Library = &EndpointOptionLibrary
+	// }
+
+	// if opts != nil {
+	// 	for k := range EndpointMutableOptionLibrary {
+	// 		ep.Opts.Set(k, opts.IsEnabled(k))
+	// 	}
+	// 	// Lets keep this here to prevent users to hurt themselves.
+	// 	ep.Opts.SetIfUnset(OptionLearnTraffic, false)
+	// }
+}

@@ -18,8 +18,10 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/networkplayground/pkg/endpoint"
 	"github.com/networkplayground/pkg/option"
 
 	"github.com/gorilla/mux"
@@ -126,6 +128,150 @@ func (router *Router) g3MapDump(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(dump); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+}
+
+func (router *Router) endpointCreate(w http.ResponseWriter, r *http.Request) {
+
+	d := json.NewDecoder(r.Body)
+	var ep endpoint.Endpoint
+	if err := d.Decode(&ep); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	logger.Debugf("endpointCreate: %d", ep.DockerID)
+	if err := router.daemon.EndpointJoin(ep); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (router *Router) endpointDelete(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dockerID, exists := vars["dockerID"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty docker id"))
+		return
+	}
+	logger.Debugf("endpointDelete: %d", dockerID)
+	// if err := router.daemon.EndpointLeave(dockerID); err != nil {
+	// 	processServerError(w, r, err)
+	// 	return
+	// }
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (router *Router) endpointGet(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dockerID, exists := vars["dockerID"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty docker ID"))
+		return
+	}
+	logger.Debugf("endpointGet: %d", dockerID)
+	ep, err := router.daemon.EndpointGet(dockerID)
+	if err != nil {
+		processServerError(w, r, fmt.Errorf("error while getting endpoint: %s", err))
+		return
+	}
+	if ep == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(ep); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+}
+
+func (router *Router) endpointUpdate(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dockerID, exists := vars["dockerID"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty docker id"))
+		return
+	}
+	logger.Debugf("endpointUpdate: %d", dockerID)
+	// var opts option.OptionMap
+	// if err := json.NewDecoder(r.Body).Decode(&opts); err != nil {
+	// 	processServerError(w, r, err)
+	// 	return
+	// }
+	// if err := router.daemon.EndpointUpdate(dockerID, opts); err != nil {
+	// 	processServerError(w, r, err)
+	// 	return
+	// }
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (router *Router) endpointSave(w http.ResponseWriter, r *http.Request) {
+	var ep endpoint.Endpoint
+	if err := json.NewDecoder(r.Body).Decode(&ep); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	logger.Debugf("endpointSave: %d", ep.DockerID)
+	if err := router.daemon.EndpointSave(ep); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (router *Router) endpointLeaveByDockerEPID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dockerEPID, exists := vars["dockerEPID"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty docker endpoint id"))
+		return
+	}
+	logger.Debugf("endpointLeaveByDockerEPID: %d", dockerEPID)
+	if err := router.daemon.EndpointLeaveByDockerEPID(dockerEPID); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (router *Router) endpointGetByDockerEPID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	dockerEPID, exists := vars["dockerEPID"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty docker endpoint id"))
+		return
+	}
+	ep, err := router.daemon.EndpointGetByDockerEPID(dockerEPID)
+	if err != nil {
+		processServerError(w, r, fmt.Errorf("error while getting endpoint: %s", err))
+		return
+	}
+	if ep == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(ep); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+}
+
+func (router *Router) endpointsGet(w http.ResponseWriter, r *http.Request) {
+	eps, err := router.daemon.EndpointsGet()
+	if err != nil {
+		processServerError(w, r, fmt.Errorf("error while getting endpoints: %s", err))
+		return
+	}
+	if eps == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(eps); err != nil {
 		processServerError(w, r, err)
 		return
 	}
