@@ -21,6 +21,22 @@ import (
 	"github.com/networkplayground/pkg/option"
 )
 
+func (d *Daemon) lookupDockerEndpoint(id string) *endpoint.Endpoint {
+	if ep, ok := d.endpointsDockerEP[id]; ok {
+		return ep
+	} else {
+		return nil
+	}
+}
+
+func (d *Daemon) lookupDockerID(id string) *endpoint.Endpoint {
+	if ep, ok := d.endpointsDocker[id]; ok {
+		return ep
+	} else {
+		return nil
+	}
+}
+
 // Returns a pointer of a copy endpoint if the endpoint was found, nil
 // otherwise. It also updates the daemon map with IDs by which the endpoint
 // can be retreived.
@@ -144,12 +160,12 @@ func (d *Daemon) EndpointLeaveByDockerEPID(dockerEPID string) error {
 // EndpointGetByDockerEPID returns a copy of the endpoint for the given dockerEPID, or nil
 // if the endpoint was not found.
 func (d *Daemon) EndpointGetByDockerEPID(dockerEPID string) (*endpoint.Endpoint, error) {
-	// d.endpointsMU.RLock()
-	// defer d.endpointsMU.RUnlock()
-
-	// if ep := d.lookupDockerEndpoint(dockerEPID); ep != nil {
-	// 	return ep.DeepCopy(), nil
-	// }
+	d.endpointsMU.RLock()
+	defer d.endpointsMU.RUnlock()
+	var ep *endpoint.Endpoint
+	if ep = d.lookupDockerEndpoint(dockerEPID); ep != nil {
+		return ep.DeepCopy(), nil
+	}
 	return nil, nil
 }
 
@@ -188,6 +204,7 @@ func (d *Daemon) EndpointUpdate(dockerID string, opts option.OptionMap) error {
 
 // EndpointSave saves the endpoint in the daemon internal endpoint map.
 func (d *Daemon) EndpointSave(ep endpoint.Endpoint) error {
+	logger.Debugf("Endpoing Save: %v", ep)
 	d.InsertEndpoint(&ep)
 	return nil
 }

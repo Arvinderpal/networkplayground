@@ -214,7 +214,6 @@ func (router *Router) endpointSave(w http.ResponseWriter, r *http.Request) {
 		processServerError(w, r, err)
 		return
 	}
-	logger.Debugf("endpointSave: %d", ep.DockerID)
 	if err := router.daemon.EndpointSave(ep); err != nil {
 		processServerError(w, r, err)
 		return

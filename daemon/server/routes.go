@@ -69,7 +69,7 @@ func (r *Router) initBackendRoutes() {
 			"EndpointUpdate", "POST", "/endpoint/update/{dockerID}", r.endpointUpdate,
 		},
 		route{
-			"EndpointSave", "POST", "/endpoint/save/{dockerID}", r.endpointSave,
+			"EndpointSaveByDockerEPID", "POST", "/endpoint/save/{dockerEPID}", r.endpointSave,
 		},
 		route{
 			"EndpointLeaveByDockerEPID", "DELETE", "/endpoint-by-docker-ep-id/{dockerEPID}", r.endpointLeaveByDockerEPID,

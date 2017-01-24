@@ -24,7 +24,7 @@ func (d *Daemon) Ping() (*types.PingResponse, error) {
 	defer d.conf.OptsMU.RUnlock()
 	logger.Infof("Received Ping Request...")
 	return &types.PingResponse{
-		NodeAddress: "not-an-address", //d.conf.NodeAddress.String(),
+		NodeAddress: d.conf.NodeAddress,
 		Opts:        d.conf.Opts,
 	}, nil
 }

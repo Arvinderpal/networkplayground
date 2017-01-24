@@ -104,7 +104,7 @@ func (cli Client) EndpointLeaveByDockerEPID(dockerEPID string) error {
 // EndpointGetByDockerEPID sends a GET request with dockerEPID to the daemon.
 func (cli Client) EndpointGetByDockerEPID(dockerEPID string) (*endpoint.Endpoint, error) {
 
-	logger.Debugf("GET /endpoint/%d", dockerEPID)
+	logger.Debugf("GET /endpoint/%s", dockerEPID)
 
 	serverResp, err := cli.R().Get("/endpoint-by-docker-ep-id/" + dockerEPID)
 	if err != nil {
@@ -172,11 +172,11 @@ func (cli Client) EndpointUpdate(dockerID string, opts option.OptionMap) error {
 }
 
 // EndpointSave sends a endpoint POST request with ep to the daemon.
-func (cli Client) EndpointSave(ep endpoint.Endpoint) error {
+func (cli Client) EndpointSaveByDockerEPID(ep endpoint.Endpoint) error {
 
-	logger.Debugf("Save: POST /endpoint/%d", ep.DockerID)
+	logger.Debugf("POST /endpoint/save/%s", ep.DockerEndpointID)
 
-	serverResp, err := cli.R().SetBody(ep).Post("/endpoint/save/" + ep.DockerID)
+	serverResp, err := cli.R().SetBody(ep).Post("/endpoint/save/" + ep.DockerEndpointID)
 	if err != nil {
 		return fmt.Errorf("error while connecting to daemon: %s", err)
 	}

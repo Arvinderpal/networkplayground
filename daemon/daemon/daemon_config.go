@@ -49,6 +49,8 @@ type Config struct {
 	Tunnel         string       // Tunnel mode
 	DockerEndpoint string       // Docker endpoint
 
+	NodeAddress string // Node IPv4 Address in CIDR notation
+
 	DryMode bool // Do not create BPF maps, devices, ..
 
 	// Options changeable at runtime

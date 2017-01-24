@@ -47,7 +47,7 @@ cd /usr/share/bcc
 ###########
 # Regulus #
 ###########
-./regulus daemon run -D /root/go/src/github.com/networkplayground/bpf --d eth1
+./regulus daemon run -D /root/go/src/github.com/networkplayground/bpf --d eth1 --n 192.168.80.201 
 ./regulus daemon g3map list
 ./regulus daemon g3map update 10.0.2.66=200
 ./regulus daemon g3map delete 10.0.2.66
@@ -61,6 +61,18 @@ v destroy -f
 v up --provision-with setupkernel --provider virtualbox; v reload --provision-with bootstrap,setupbcc,setupxdp; v reload --provision-with networksetup,simplenetwork
 
 /vagrant/netscripts/vxlan/quickprovision.sh $HOSTNAME
+
+
+###############
+# Docker      #
+###############
+docker run -it ubuntu date
+docker run -it ubuntu /bin/bash
+# plugins 
+docker network create --driver regulus mybr1
+docker network connect mybr1 hungry_murdock
+
+docker run --network=mynet busybox top
 
 ###############
 # Linux Build #

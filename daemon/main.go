@@ -14,6 +14,7 @@ package daemon
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"strings"
@@ -38,6 +39,7 @@ var (
 
 	// Arguments variables keep in alphabetical order
 	socketPath string
+	nodeAddr   string
 
 	log = logging.MustGetLogger("regulus-net-daemon")
 
@@ -85,6 +87,16 @@ func init() {
 						Name:        "e",
 						Value:       "unix:///var/run/docker.sock",
 						Usage:       "Register a listener for docker events on the given endpoint",
+					},
+					cli.StringFlag{
+						Destination: &nodeAddr,
+						Name:        "n, node-address",
+						Value:       "",
+						Usage:       "IPv4 address of node, must be in correct format",
+					},
+					cli.BoolFlag{
+						Name:  "debug",
+						Usage: "Enable debug messages",
 					},
 				},
 			},
@@ -400,7 +412,7 @@ func dumpG3Map(client *rclient.Client) error {
 
 func initEnv(ctx *cli.Context) error {
 	config.OptsMU.Lock()
-	if ctx.GlobalBool("debug") {
+	if ctx.Bool("debug") {
 		common.SetupLOG(log, "DEBUG")
 		config.Opts.Set(OptionDebug, true)
 	} else {
@@ -408,6 +420,12 @@ func initEnv(ctx *cli.Context) error {
 	}
 
 	config.OptsMU.Unlock()
+
+	ipaddr := net.ParseIP(nodeAddr)
+	if ipaddr == nil {
+		log.Fatalf("Unable to parse node address %s", nodeAddr)
+	}
+	config.NodeAddress = nodeAddr
 
 	// Mount BPF Map directory if not already done
 	args := []string{"-q", common.BPFMapRoot}
