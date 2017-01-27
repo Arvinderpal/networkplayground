@@ -141,7 +141,7 @@ func (router *Router) endpointCreate(w http.ResponseWriter, r *http.Request) {
 		processServerError(w, r, err)
 		return
 	}
-	logger.Debugf("endpointCreate: %d", ep.DockerID)
+	logger.Debugf("endpointCreate: %q", ep.DockerID)
 	if err := router.daemon.EndpointJoin(ep); err != nil {
 		processServerError(w, r, err)
 		return
@@ -156,7 +156,7 @@ func (router *Router) endpointDelete(w http.ResponseWriter, r *http.Request) {
 		processServerError(w, r, errors.New("server received empty docker id"))
 		return
 	}
-	logger.Debugf("endpointDelete: %d", dockerID)
+	logger.Debugf("endpointDelete: %q", dockerID)
 	// if err := router.daemon.EndpointLeave(dockerID); err != nil {
 	// 	processServerError(w, r, err)
 	// 	return
@@ -171,7 +171,7 @@ func (router *Router) endpointGet(w http.ResponseWriter, r *http.Request) {
 		processServerError(w, r, errors.New("server received empty docker ID"))
 		return
 	}
-	logger.Debugf("endpointGet: %d", dockerID)
+	logger.Debugf("endpointGet: %q", dockerID)
 	ep, err := router.daemon.EndpointGet(dockerID)
 	if err != nil {
 		processServerError(w, r, fmt.Errorf("error while getting endpoint: %s", err))
@@ -195,7 +195,7 @@ func (router *Router) endpointUpdate(w http.ResponseWriter, r *http.Request) {
 		processServerError(w, r, errors.New("server received empty docker id"))
 		return
 	}
-	logger.Debugf("endpointUpdate: %d", dockerID)
+	logger.Debugf("endpointUpdate: %s", dockerID)
 	// var opts option.OptionMap
 	// if err := json.NewDecoder(r.Body).Decode(&opts); err != nil {
 	// 	processServerError(w, r, err)
@@ -214,6 +214,7 @@ func (router *Router) endpointSave(w http.ResponseWriter, r *http.Request) {
 		processServerError(w, r, err)
 		return
 	}
+	logger.Debugf("endpointSave: %s", ep.DockerEndpointID)
 	if err := router.daemon.EndpointSave(ep); err != nil {
 		processServerError(w, r, err)
 		return

@@ -21,16 +21,16 @@ import (
 	"github.com/networkplayground/pkg/option"
 )
 
-func (d *Daemon) lookupDockerEndpoint(id string) *endpoint.Endpoint {
-	if ep, ok := d.endpointsDockerEP[id]; ok {
+func (d *Daemon) lookupDockerEndpoint(dockerEPID string) *endpoint.Endpoint {
+	if ep, ok := d.endpointsDockerEP[dockerEPID]; ok {
 		return ep
 	} else {
 		return nil
 	}
 }
 
-func (d *Daemon) lookupDockerID(id string) *endpoint.Endpoint {
-	if ep, ok := d.endpointsDocker[id]; ok {
+func (d *Daemon) lookupRegulusEndPoint(dockerID string) *endpoint.Endpoint {
+	if ep, ok := d.endpointsDocker[dockerID]; ok {
 		return ep
 	} else {
 		return nil
@@ -124,6 +124,8 @@ func (d *Daemon) EndpointLeave(dockerID string) error {
 	d.endpointsMU.Lock()
 	defer d.endpointsMU.Unlock()
 
+	// TODO(awander): free resources and delete ep from map
+
 	logger.Infof("Endpoint Leave successful on container: %s", dockerID)
 	return nil
 }
@@ -134,9 +136,9 @@ func (d *Daemon) EndpointGet(dockerID string) (*endpoint.Endpoint, error) {
 	d.endpointsMU.RLock()
 	defer d.endpointsMU.RUnlock()
 
-	// if ep := d.lookupRegulusEndpoint(dockerID); ep != nil {
-	// 	return ep.DeepCopy(), nil
-	// }
+	if ep := d.lookupRegulusEndPoint(dockerID); ep != nil {
+		return ep.DeepCopy(), nil
+	}
 
 	return nil, nil
 }
@@ -145,14 +147,14 @@ func (d *Daemon) EndpointGet(dockerID string) (*endpoint.Endpoint, error) {
 // relevant details with the epID.
 func (d *Daemon) EndpointLeaveByDockerEPID(dockerEPID string) error {
 	// FIXME: Validate dockerEPID?
-	// d.endpointsMU.Lock()
-	// if ep := d.lookupDockerEndpoint(dockerEPID); ep != nil {
-	// 	d.endpointsMU.Unlock()
-	// 	return d.EndpointLeave(ep.ID)
-	// } else {
-	// 	d.endpointsMU.Unlock()
-	// 	return fmt.Errorf("endpoint %s not found", dockerEPID)
-	// }
+	d.endpointsMU.Lock()
+	if ep := d.lookupDockerEndpoint(dockerEPID); ep != nil {
+		d.endpointsMU.Unlock()
+		return d.EndpointLeave(ep.DockerID)
+	} else {
+		d.endpointsMU.Unlock()
+		return fmt.Errorf("endpoint %s not found", dockerEPID)
+	}
 	logger.Infof("Endpoint Leave successful on Docker EPID: %s", dockerEPID)
 	return nil
 }
@@ -204,7 +206,7 @@ func (d *Daemon) EndpointUpdate(dockerID string, opts option.OptionMap) error {
 
 // EndpointSave saves the endpoint in the daemon internal endpoint map.
 func (d *Daemon) EndpointSave(ep endpoint.Endpoint) error {
-	logger.Debugf("Endpoing Save: %v", ep)
+	logger.Debugf("Endpoint Save: %v", ep)
 	d.InsertEndpoint(&ep)
 	return nil
 }

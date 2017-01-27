@@ -55,7 +55,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # Note shared folders are REQUIRED for the shell provisioning to work
       # rsync (if nfs does not work)
       srv.vm.synced_folder ".", "/root/go/src/github.com/networkplayground", type: "rsync"
-      
+      srv.vm.synced_folder "~/go/src/github.com/containernetworking/cni", "/root/go/src/github.com/containernetworking/cni", type: "rsync"
+
       # NFS
       #srv.vm.synced_folder ".", "/vagrant", type: "nfs"
       #srv.vm.synced_folder '.', '/root/go/src/github.com/networkplayground', type: "nfs"

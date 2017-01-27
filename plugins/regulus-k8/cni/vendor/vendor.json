@@ -1,0 +1,130 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "KWxx9CR7a6qZNu+L4sZ3U0o5bD8=",
+			"path": "github.com/appc/cni/pkg/version",
+			"revision": "c4271dba67fa09ee07170364d2f97a3c95d651f3",
+			"revisionTime": "2017-01-25T19:20:57Z"
+		},
+		{
+			"checksumSHA1": "Ew4nceNlpklP7zB0CI5O8xlzQp4=",
+			"path": "github.com/containernetworking/cni/pkg/invoke",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		},
+		{
+			"checksumSHA1": "F1utsFXSpgUtjxIZK8dyT5+Hi34=",
+			"path": "github.com/containernetworking/cni/pkg/ip",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		},
+		{
+			"checksumSHA1": "cMYIBmly2ZsAHW9eMNuoApscmU4=",
+			"path": "github.com/containernetworking/cni/pkg/ipam",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		},
+		{
+			"checksumSHA1": "sWA2WRoykEtQnIJGdajZKoePy0U=",
+			"path": "github.com/containernetworking/cni/pkg/ns",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		},
+		{
+			"checksumSHA1": "ZiJmQ52xR3Qy53NbfGRct4mVhQM=",
+			"path": "github.com/containernetworking/cni/pkg/skel",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		},
+		{
+			"checksumSHA1": "hq0pWw7MU74nQ8tnO5afBDwrYhU=",
+			"path": "github.com/containernetworking/cni/pkg/types",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		},
+		{
+			"checksumSHA1": "8rJLO5vv9q+KlPwkS1mnNm9zxxY=",
+			"path": "github.com/containernetworking/cni/pkg/utils/hwaddr",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		},
+		{
+			"checksumSHA1": "SuXvoRn3CWy/GvUbqktbQ2z+SVs=",
+			"path": "github.com/containernetworking/cni/pkg/version",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		},
+		{
+			"checksumSHA1": "u4FpRzbQoItl4TSuT+IhRb+g898=",
+			"origin": "github.com/containernetworking/cni/vendor/github.com/coreos/go-iptables/iptables",
+			"path": "github.com/coreos/go-iptables/iptables",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		},
+		{
+			"checksumSHA1": "x77xUarDfVxctJMAJPCQzlYk8JM=",
+			"origin": "github.com/networkplayground/vendor/github.com/fatih/color",
+			"path": "github.com/fatih/color",
+			"revision": "844667186fd89f4df74871d6dff722bda2c4de08",
+			"revisionTime": "2017-01-24T01:58:35Z"
+		},
+		{
+			"checksumSHA1": "I4njd26dG5hxFT2nawuByM4pxzY=",
+			"origin": "github.com/networkplayground/vendor/github.com/mattn/go-colorable",
+			"path": "github.com/mattn/go-colorable",
+			"revision": "844667186fd89f4df74871d6dff722bda2c4de08",
+			"revisionTime": "2017-01-24T01:58:35Z"
+		},
+		{
+			"checksumSHA1": "xZuhljnmBysJPta/lMyYmJdujCg=",
+			"origin": "github.com/networkplayground/vendor/github.com/mattn/go-isatty",
+			"path": "github.com/mattn/go-isatty",
+			"revision": "844667186fd89f4df74871d6dff722bda2c4de08",
+			"revisionTime": "2017-01-24T01:58:35Z"
+		},
+		{
+			"checksumSHA1": "rFxn+mB/TuZDkf58NBsfPMJb/ug=",
+			"path": "github.com/networkplayground/common",
+			"revision": "844667186fd89f4df74871d6dff722bda2c4de08",
+			"revisionTime": "2017-01-24T01:58:35Z"
+		},
+		{
+			"checksumSHA1": "BoXdUBWB8UnSlFlbnuTQaPqfCGk=",
+			"origin": "github.com/networkplayground/vendor/github.com/op/go-logging",
+			"path": "github.com/op/go-logging",
+			"revision": "844667186fd89f4df74871d6dff722bda2c4de08",
+			"revisionTime": "2017-01-24T01:58:35Z"
+		},
+		{
+			"checksumSHA1": "1X4+LZRyRioFEkyTBVgcWwVRl88=",
+			"origin": "github.com/containernetworking/cni/vendor/github.com/vishvananda/netlink",
+			"path": "github.com/vishvananda/netlink",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		},
+		{
+			"checksumSHA1": "qKneIoHTQHLsL2EF1Zl3S7S++gk=",
+			"origin": "github.com/containernetworking/cni/vendor/github.com/vishvananda/netlink/nl",
+			"path": "github.com/vishvananda/netlink/nl",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		},
+		{
+			"checksumSHA1": "zjfUA3qOv6grhBLpyJ+7EejXWQE=",
+			"origin": "github.com/containernetworking/cni/vendor/github.com/vishvananda/netns",
+			"path": "github.com/vishvananda/netns",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		},
+		{
+			"checksumSHA1": "fg7rQ5uwp0HiQJNJVNekm0MOxIs=",
+			"origin": "github.com/containernetworking/cni/vendor/golang.org/x/sys/unix",
+			"path": "golang.org/x/sys/unix",
+			"revision": "530dd71e193012895ff7beee42cd64a02e1993da",
+			"revisionTime": "2017-01-13T01:06:04Z"
+		}
+	],
+	"rootPath": "github.com/networkplayground/plugins/regulus-k8/cni"
+}

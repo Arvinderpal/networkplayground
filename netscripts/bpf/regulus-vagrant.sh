@@ -13,6 +13,14 @@ function regulus_setup(){
 	groupadd -f regulus
 	usermod -a -G regulus vagrant
 
+	###########
+	# CNI 
+	###########
+	# build and install host-local ipam 
+	# assumes cni directory under root/go/src/github.com/containernetworking/cni
+	cd /root/go/src/github.com/containernetworking/cni
+	./build
+	cp bin/host-local /opt/cni/bin
 
 	# VAGRANT_MOUNT_DIR=/vagrant/
 	# VAGRANT_MOUNT_DIR=/root/go/src/github.com/networkplayground

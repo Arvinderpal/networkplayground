@@ -64,6 +64,15 @@ v up --provision-with setupkernel --provider virtualbox; v reload --provision-wi
 
 
 ###############
+#    CNI      #
+###############
+cd ~/go/src/github.com/networkplayground/plugins/regulus-k8/cni 
+make clean ; make; make install
+cd scripts/ 
+CNI_PATH=$CNI_PATH ./docker-run.sh --rm busybox:latest ifconfig
+
+
+###############
 # Docker      #
 ###############
 docker run -it ubuntu date

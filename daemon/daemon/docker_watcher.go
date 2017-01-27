@@ -168,7 +168,7 @@ func (d *Daemon) updateContainer(container *types.Container, isNewContainer bool
 			break
 		}
 		// if container.IsDockerOrInfracontainer() {
-		logger.Debugf("Waiting for orchestration system to request networking for container %s... [%d/%d]", dockerID, try, maxTries)
+		logger.Debugf("Waiting for orchestration system to request networking for container %s EPID[%s]... [%d/%d]", dockerID, dockerEPID, try, maxTries)
 		// }
 		time.Sleep(time.Duration(try) * time.Second)
 		try++

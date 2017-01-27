@@ -24,7 +24,7 @@ import (
 // EndpointJoin sends a endpoint POST request with ep to the daemon.
 func (cli Client) EndpointJoin(ep endpoint.Endpoint) error {
 
-	logger.Debugf("POST /endpoint/%d", ep.DockerID)
+	logger.Debugf("POST /endpoint/%q", ep.DockerID)
 
 	serverResp, err := cli.R().SetBody(ep).Post("/endpoint/" + ep.DockerID)
 	if err != nil {
@@ -41,7 +41,7 @@ func (cli Client) EndpointJoin(ep endpoint.Endpoint) error {
 // EndpointLeave sends a DELETE request with dockerID to the daemon.
 func (cli Client) EndpointLeave(dockerID string) error {
 
-	logger.Debugf("DELETE /endpoint/%d", dockerID)
+	logger.Debugf("DELETE /endpoint/%q", dockerID)
 
 	serverResp, err := cli.R().Delete("/endpoint/" + dockerID)
 	if err != nil {
@@ -59,7 +59,7 @@ func (cli Client) EndpointLeave(dockerID string) error {
 // EndpointGetByDockerID sends a GET request with dockerID to the daemon.
 func (cli Client) EndpointGet(dockerID string) (*endpoint.Endpoint, error) {
 
-	logger.Debugf("GET /endpoint/%d", dockerID)
+	logger.Debugf("GET /endpoint/%q", dockerID)
 
 	serverResp, err := cli.R().Get("/endpoint/" + dockerID)
 	if err != nil {
