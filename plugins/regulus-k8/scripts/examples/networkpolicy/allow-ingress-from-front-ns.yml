@@ -1,0 +1,18 @@
+kind: NetworkPolicy
+apiVersion: extensions/v1beta1 
+metadata:
+  namespace: back-ns
+  name: backend-policy
+spec:
+  podSelector:
+    matchLabels:
+      role: backend 
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: front-ns
+      ports:
+        - protocol: TCP
+          port: 12000
+

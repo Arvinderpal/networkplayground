@@ -1,0 +1,9 @@
+{
+   "metadata": {
+     "name": "my-new-cron-object"
+   },
+   "apiVersion": "stable.example.com/v1",
+   "kind": "CronTab",
+   "cronSpec": "11111111",
+   "image": "my-awesome-cron-image1111111"
+}

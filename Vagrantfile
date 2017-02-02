@@ -1,4 +1,3 @@
-
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
@@ -42,11 +41,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       # Don't check for box updates
       srv.vm.box_check_update = false
       srv.vm.hostname = servers["name"]
+
       srv.vm.provider "virtualbox" do |v|
         v.name = servers["name"]
+        v.memory = servers["ram"]
+        v.cpus = servers["vcpu"]
+      end
+      # Configure VMs with RAM and CPUs per settings in servers.yml
+      srv.vm.provider :vmware_workstation do |vmw|
+        vmw.vmx["memsize"] = servers["ram"]
+        vmw.vmx["numvcpus"] = servers["vcpu"]
       end
       srv.vm.box = servers["box"]
-      srv.vm.boot_timeout = 10000
+      srv.vm.boot_timeout = 10000 
       
       # Assign an additional static private network
       srv.vm.network "private_network", ip: servers["priv_ip"]
@@ -122,12 +129,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       #srv.vm.provision "shell", path: "./netscripts/multihost_dual_subnet_vxlan_vnid_isolation.sh", args: [servers["pod1_ip"], servers["pod2_ip"],  servers["remotetun1_ip"], servers["remotetun2_ip"], servers["remote1"], servers["remote2"]], privileged: true
 
       #srv.vm.provision "shell", path: "./netscripts/ipsec_multihost_dual_subnet.sh", args: [servers["netns1_ip"], servers["netns2_ip"],  servers["remote1"], servers["remote2"]], privileged: true
-      
-      # Configure VMs with RAM and CPUs per settings in servers.yml
-      srv.vm.provider :vmware_workstation do |vmw|
-        vmw.vmx["memsize"] = servers["ram"]
-        vmw.vmx["numvcpus"] = servers["vcpu"]
-      end
+
     end
   end
 end

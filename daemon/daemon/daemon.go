@@ -37,9 +37,11 @@ import (
 	// dTypes "gi/thub.com/docker/docker/api/types"
 	"github.com/op/go-logging"
 	"github.com/vishvananda/netlink"
-	// k8s "k8s.io/client-go/1.5/kubernetes"
-	// k8sRest "k8s.io/client-go/1.5/rest"
-	// k8sClientCmd "k8s.io/client-go/1.5/tools/clientcmd"
+
+	k8s "k8s.io/client-go/1.5/kubernetes"
+	k8sRest "k8s.io/client-go/1.5/rest"
+	k8sClientCmd "k8s.io/client-go/1.5/tools/clientcmd"
+	// "k8s.io/kubernetes/pkg/registry/service/ipallocator"
 )
 
 var (
@@ -55,11 +57,29 @@ type Daemon struct {
 	endpointsDockerEP map[string]*endpoint.Endpoint
 	conf              *Config
 	dockerClient      *dClient.Client
+	k8sClient         *k8s.Clientset
 }
 
 func createDockerClient(endpoint string) (*dClient.Client, error) {
 	defaultHeaders := map[string]string{"User-Agent": "regulus"}
 	return dClient.NewClient(endpoint, "v1.21", nil, defaultHeaders)
+}
+
+func createK8sClient(endpoint, kubeCfgPath string) (*k8s.Clientset, error) {
+	var (
+		config *k8sRest.Config
+		err    error
+	)
+	if kubeCfgPath != "" {
+		config, err = k8sClientCmd.BuildConfigFromFlags("", kubeCfgPath)
+	} else {
+		config = &k8sRest.Config{Host: endpoint}
+		err = k8sRest.SetKubernetesDefaults(config)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return k8s.NewForConfig(config)
 }
 
 func (d *Daemon) writeNetdevHeader(dir string) error {
@@ -152,6 +172,13 @@ func NewDaemon(c *Config) (*Daemon, error) {
 		containers:        make(map[string]*types.Container),
 		endpointsDocker:   make(map[string]*endpoint.Endpoint),
 		endpointsDockerEP: make(map[string]*endpoint.Endpoint),
+	}
+
+	if c.IsK8sEnabled() {
+		d.k8sClient, err = createK8sClient(c.K8sEndpoint, c.K8sCfgPath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err := d.init(); err != nil {

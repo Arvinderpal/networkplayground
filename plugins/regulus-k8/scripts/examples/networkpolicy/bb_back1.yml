@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: back1
+#  namespace: a-namespace
+  labels:
+    role: backend
+spec:
+  containers:
+    - image: "busybox:1.25.0-uclibc"
+      imagePullPolicy: IfNotPresent
+      name: busybox
+      tty: true
+      stdin: true

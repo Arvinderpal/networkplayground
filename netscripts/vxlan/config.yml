@@ -1,8 +1,8 @@
 ---
 - name: etcd-01
   box: marcv81/xenial64
-  ram: 512
-  vcpu: 1
+  ram: 5120 # k8 build requires a lot of memory 
+  vcpu: 3 # use more cpus for k8
   clustersubnet: 10.1.0.0/16
   priv_ip: 192.168.80.201
   host_subnet: 10.1.1.0/24

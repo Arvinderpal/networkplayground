@@ -1,0 +1,10 @@
+metadata:
+  name: mysql-db.prsn.io
+  labels:
+    resource: database
+    object: mysql
+apiVersion: extensions/v1beta1
+kind: ThirdPartyResource
+description: "A specification of database for mysql"
+versions:
+  - name: stable/v1

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: alpine-back1
+#  namespace: a-namespace
+  labels:
+    role: backend
+spec:
+  containers:
+    - image: gliderlabs/alpine
+      imagePullPolicy: IfNotPresent
+      name: alpine
+      tty: true
+      stdin: true

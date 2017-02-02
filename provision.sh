@@ -52,18 +52,32 @@ fi
 
 # Update package list
 # sudo apt-get update
-
 # Install LXC/LXD if not already installed
 # if [[ ! -e /usr/bin/lxd ]]; then
 #     sudo apt-get -y install lxd
 # fi
 
+# #######
+# Docker
+# #######
+apt-get install -y apt-transport-https ca-certificates
+curl -fsSL https://yum.dockerproject.org/gpg | sudo apt-key add -
+sudo add-apt-repository \
+       "deb https://apt.dockerproject.org/repo/ \
+       ubuntu-$(lsb_release -cs) \
+       main"
+apt-get update
+apt-get -y install docker-engine
+
 # ####
 # GO
 # #####
-add-apt-repository ppa:ubuntu-lxc/lxd-stable -y
-apt-get update
-apt-get install -y golang
+wget https://storage.googleapis.com/golang/go1.7.5.linux-amd64.tar.gz
+tar -C /usr/local -xzf go1.7.5.linux-amd64.tar.gz
+ln -s  /usr/local/go/bin/go /usr/bin/go
+ln -s  /usr/local/go/bin/gofmt /usr/bin/gofmt
+ln -s  /usr/local/go/bin/godoc /usr/bin/godoc
+# apt-get install -y golang
 
 # #######
 # Docker: https://docs.docker.com/engine/installation/linux/ubuntulinux/#/install-the-latest-version

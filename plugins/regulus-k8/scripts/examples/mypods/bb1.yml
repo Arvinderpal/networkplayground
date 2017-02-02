@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bb1
+#  namespace: default
+  labels:
+    role: test
+spec:
+  containers:
+    - image: busybox
+      imagePullPolicy: IfNotPresent
+      name: busybox
+      tty: true
+      stdin: true

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: alp-back2
+  labels:
+    role: backend
+spec:
+# This shows how to use a simple value. This will look for a passed-in value
+# called restartPolicy. If it is not found, it will use the default value.
+# {{default "Never" .restartPolicy}} is a slightly optimized version of the
+# more conventional syntax: {{.restartPolicy | default "Never"}}
+#  restartPolicy: {{default "Never" .Values.restartPolicy}}
+  restartPolicy: Always
+  containers:
+  - name: waiter
+    image: "alpine:3.3"
+    command: ["/bin/sleep","9000"]
+    tty: true
+    stdin: true
+    imagePullPolicy: IfNotPresent
+

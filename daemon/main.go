@@ -94,6 +94,17 @@ func init() {
 						Value:       "",
 						Usage:       "IPv4 address of node, must be in correct format",
 					},
+					cli.StringFlag{
+						Destination: &config.K8sEndpoint,
+						Name:        "k8s-api-server, k",
+						Usage:       "Kubernetes api address server",
+					},
+					cli.StringFlag{
+						Destination: &config.K8sCfgPath,
+						Name:        "k8s-kubeconfig-path",
+						Usage:       "Absolute path to the kubeconfig file",
+					},
+
 					cli.BoolFlag{
 						Name:  "debug",
 						Usage: "Enable debug messages",
@@ -436,6 +447,9 @@ func initEnv(ctx *cli.Context) error {
 		if err != nil {
 			log.Fatalf("Command execution failed: %s\n%s", err, out)
 		}
+	}
+	if config.IsK8sEnabled() && !strings.HasPrefix(config.K8sEndpoint, "http") {
+		config.K8sEndpoint = "http://" + config.K8sEndpoint
 	}
 
 	return nil

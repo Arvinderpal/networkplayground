@@ -51,6 +51,9 @@ type Config struct {
 
 	NodeAddress string // Node IPv4 Address in CIDR notation
 
+	K8sEndpoint string // Kubernetes endpoint
+	K8sCfgPath  string // Kubeconfig path
+
 	DryMode bool // Do not create BPF maps, devices, ..
 
 	// Options changeable at runtime
@@ -62,4 +65,8 @@ func NewConfig() *Config {
 	return &Config{
 		Opts: option.NewBoolOptions(&DaemonOptionLibrary),
 	}
+}
+
+func (c *Config) IsK8sEnabled() bool {
+	return c.K8sEndpoint != "" || c.K8sCfgPath != ""
 }

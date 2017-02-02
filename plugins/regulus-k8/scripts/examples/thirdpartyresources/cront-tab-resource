@@ -1,0 +1,8 @@
+metadata:
+  name: cron-tab.stable.example.com
+apiVersion: extensions/v1beta1
+kind: ThirdPartyResource
+description: "A specification of a Pod to run on a cron style schedule"
+versions:
+- name: v1
+- name: v2

@@ -41,7 +41,7 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
-var log = l.MustGetLogger("regulus-net-cni")
+var log = l.MustGetLogger("regulus-ovs-cni")
 
 // TODO(awander): we should make this configurable
 const CNI_PLUGIN_DIR = "/opt/cni/bin"
@@ -89,8 +89,8 @@ type CNIAdditionalArgs struct {
 	PodNameSpace string `json:"k8spodnamespace,omitempty"`
 	PodName      string `json:"k8spodname,omitempty"`
 	ContainerID  string `json:"k8spodinfracontainerid,omitempty"`
-	PodVNID      string `json:"k8spodvnid,omitempty"`
-	PodIP        string `json:"k8spodip,omitempty"`
+	// PodVNID      string `json:"k8spodvnid,omitempty"`
+	// PodIP        string `json:"k8spodip,omitempty"`
 }
 
 // LoadCNIAdditionalArgs loads the additional CNI arguments passed into plugin as part of RuntimeConf
@@ -137,19 +137,19 @@ func LoadCNIAdditionalArgs(args string) (*CNIAdditionalArgs, error) {
 		}
 		argsStruct.ContainerID = kv[1]
 
-		// PodVNID:
-		kv = strings.Split(pairs[4], "=")
-		if len(kv) != 2 {
-			return nil, fmt.Errorf("ARGS: invalid pairs %q", pairs[4])
-		}
-		argsStruct.PodVNID = kv[1]
+		// // PodVNID:
+		// kv = strings.Split(pairs[4], "=")
+		// if len(kv) != 2 {
+		// 	return nil, fmt.Errorf("ARGS: invalid pairs %q", pairs[4])
+		// }
+		// argsStruct.PodVNID = kv[1]
 
-		// PodIP:
-		kv = strings.Split(pairs[5], "=")
-		if len(kv) != 2 {
-			return nil, fmt.Errorf("ARGS: invalid pairs %q", pairs[5])
-		}
-		argsStruct.PodIP = kv[1]
+		// // PodIP:
+		// kv = strings.Split(pairs[5], "=")
+		// if len(kv) != 2 {
+		// 	return nil, fmt.Errorf("ARGS: invalid pairs %q", pairs[5])
+		// }
+		// argsStruct.PodIP = kv[1]
 	}
 
 	return argsStruct, nil
@@ -526,21 +526,23 @@ func cmdDel(args *skel.CmdArgs) error {
 		return err
 	}
 
-	additionalArgs, err := LoadCNIAdditionalArgs(args.Args)
+	// TODO(awander): during cmdDel, IP address was passed as additonal arg to cni plugin; no longer the case; how does ipam delete the entry? Can we get IP from ipam?? It is needed to remove ovs ruels and generate ovs port #
 
-	// get the port allocated for this pod
-	ipaddr, netaddr, err := net.ParseCIDR(additionalArgs.PodIP + "/32")
-	if err != nil {
-		return err
-	}
-	ovsPortNum := ipToPortMapper(ipaddr)
+	// additionalArgs, err := LoadCNIAdditionalArgs(args.Args)
 
-	hostVeth := getHostSideVeth(args.ContainerID)
-	if hostVeth == nil {
-		return fmt.Errorf("Could not find veth for pod %v", args.ContainerID)
-	}
+	// // get the port allocated for this pod
+	// ipaddr, netaddr, err := net.ParseCIDR(additionalArgs.PodIP + "/32")
+	// if err != nil {
+	// 	return err
+	// }
+	// ovsPortNum := ipToPortMapper(ipaddr)
 
-	log.Debugf("ovs delete port on br: %s port name: %s addr: %s port #: %v", n.BrName, hostVeth.Attrs().Name, netaddr, ovsPortNum)
+	// hostVeth := getHostSideVeth(args.ContainerID)
+	// if hostVeth == nil {
+	// 	return fmt.Errorf("Could not find veth for pod %v", args.ContainerID)
+	// }
+
+	// log.Debugf("ovs delete port on br: %s port name: %s addr: %s port #: %v", n.BrName, hostVeth.Attrs().Name, netaddr, ovsPortNum)
 	// TODO(awander): enable this when we have ovs setup
 	// ovsDeletePort(n.BrName, hostVeth.Attrs().Name, netaddr, ovsPortNum, additionalArgs.PodVNID)
 
