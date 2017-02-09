@@ -124,7 +124,7 @@ func (v *L1MapValue) String() string {
 	return fmt.Sprintf("%s", v.Count)
 }
 
-func (p *L1Program) UpdateElement(k, v string) error {
+func (p *L1Program) UpdateElement(k, v, mapID string) error {
 
 	var ip net.IP
 	var err error
@@ -144,7 +144,7 @@ func (p *L1Program) UpdateElement(k, v string) error {
 	l1value.Count = uint16(value)
 
 	if err = p.updateElement(l1key, l1value); err != nil {
-		return fmt.Errorf("Map update failed for key=%s: %v", ip, err)
+		return fmt.Errorf("Map update failed for key=%s: %s", ip, err)
 	}
 	return nil
 }
@@ -157,22 +157,40 @@ func (p *L1Program) updateElement(key *L1MapKey, value *L1MapValue) error {
 	return p.Map.Update(key.Convert(), value.Convert())
 }
 
-func (p *L1Program) DeleteElement(key *L1MapKey) error {
+func (p *L1Program) DeleteElement(k, mapID string) error {
+
+	var ip net.IP
+	var err error
+
+	ip = net.ParseIP(k)
+	if ip == nil {
+		return fmt.Errorf("Unable to parsekey: %v", k)
+	}
+
+	l1key := NewKey(ip)
+
+	if err = p.deleteElement(l1key); err != nil {
+		return fmt.Errorf("Map delete failed for key=%s: %s", ip, err)
+	}
+	return nil
+}
+
+func (p *L1Program) deleteElement(key *L1MapKey) error {
 	return p.Map.Delete(key.Convert())
 }
 
-func (p *L1Program) LookupElement(key *L1MapKey) (*L1MapValue, error) {
-	var elem *L1MapValue
+// func (p *L1Program) LookupElement(key *L1MapKey) (*L1MapValue, error) {
+// 	var elem *L1MapValue
 
-	val, err := p.Map.Lookup(key.Convert())
-	if err != nil {
-		return nil, err
-	}
+// 	val, err := p.Map.Lookup(key.Convert())
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	elem = val.(*L1MapValue)
+// 	elem = val.(*L1MapValue)
 
-	return elem.Convert(), nil
-}
+// 	return elem.Convert(), nil
+// }
 
 // Dump2String dumps the entire map object in string format
 // Note that input - mapID - is ignored since we only have a single map
@@ -192,20 +210,3 @@ func (p *L1Program) Dump2String(mapID string) (string, error) {
 	}
 	return dump, nil
 }
-
-// func G3MapDumpParser(key []byte, value []byte) (bpf.MapKey, bpf.MapValue, error) {
-// 	keyBuf := bytes.NewBuffer(key)
-// 	valueBuf := bytes.NewBuffer(value)
-// 	g3key := G3MapKey{}
-// 	g3val := G3MapValue{}
-
-// 	if err := binary.Read(keyBuf, binary.LittleEndian, &g3key); err != nil {
-// 		return nil, nil, fmt.Errorf("Unable to convert key: %s\n", err)
-// 	}
-
-// 	if err := binary.Read(valueBuf, binary.LittleEndian, &g3val); err != nil {
-// 		return nil, nil, fmt.Errorf("Unable to convert key: %s\n", err)
-// 	}
-
-// 	return g3key.Convert(), g3val.Convert(), nil
-// }

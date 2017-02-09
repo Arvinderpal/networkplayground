@@ -34,6 +34,17 @@ const (
 	OptionDebug = "Debug"
 )
 
+// Programs cli argument indexes
+// <id> <type> <start/stop/map> <dump/update/delete> <key=value>
+const (
+	DOCKER_ID_IDX       = 0
+	PROGRAM_TYPE_IDX    = 1
+	PROGRAM_OPS_IDX     = 2
+	PROGRAM_MAP_OPS_IDX = 3
+	PROGRAM_MAP_ID_IDX  = 4
+	PROGRAM_MAP_KV_IDX  = 5
+)
+
 var (
 	config = daemon.NewConfig()
 
@@ -445,9 +456,9 @@ func programUpdate(ctx *cli.Context) {
 		os.Exit(1)
 	}
 
-	dockerID := ctx.Args().Get(0)
-	progType := ctx.Args().Get(1)
-	operation := ctx.Args().Get(2)
+	dockerID := ctx.Args().Get(DOCKER_ID_IDX)
+	progType := ctx.Args().Get(PROGRAM_TYPE_IDX)
+	operation := ctx.Args().Get(PROGRAM_OPS_IDX)
 
 	dOpts := make(map[string]string, len(ctx.Args()))
 	dOpts[common.PROGRAM_ARGS_TYPE_FIELD] = progType
@@ -467,10 +478,12 @@ func programUpdate(ctx *cli.Context) {
 			os.Exit(1)
 		}
 	case "map":
-		mapOperation := ctx.Args().Get(3)
+		mapOperation := ctx.Args().Get(PROGRAM_MAP_OPS_IDX)
+		mapID := ctx.Args().Get(PROGRAM_MAP_ID_IDX)
+		dOpts[common.PROGRAM_ARGS_MAP_ID] = mapID
 		switch mapOperation {
 		case "dump":
-			dump, err := client.DumpMap2String(dockerID, progType, "empty")
+			dump, err := client.DumpMap2String(dockerID, progType, mapID)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Unable to perform {%s} {%s} for program type {%s} on container {%s}: %s \n", mapOperation, operation, progType, dockerID, err)
 				os.Exit(1)
@@ -478,12 +491,13 @@ func programUpdate(ctx *cli.Context) {
 			printDump(dump)
 		case "update":
 			// update can contain a single key value pair in the format: "key=value"
-			dOpts[common.PROGRAM_ARGS_MAP_KV_PAIR] = ctx.Args().Get(4)
+			dOpts[common.PROGRAM_ARGS_MAP_KV_PAIR] = ctx.Args().Get(PROGRAM_MAP_KV_IDX)
 			if err := client.UpdateMapEntry(dockerID, dOpts); err != nil {
 				fmt.Errorf("Could not list {%s}: %s", err)
 				os.Exit(1)
 			}
 		case "delete":
+			dOpts[common.PROGRAM_ARGS_MAP_KEY] = ctx.Args().Get(PROGRAM_MAP_KV_IDX)
 			if err := client.DeleteMapEntry(dockerID, dOpts); err != nil {
 				fmt.Errorf("Could not list {%s}: %s", err)
 				os.Exit(1)
@@ -504,22 +518,32 @@ func validateProgramCmdInputs(ctx *cli.Context) error {
 	if len(args) < 3 {
 		return fmt.Errorf("Insufficient arguments provided\n")
 	}
-	operation := ctx.Args().Get(2)
+	operation := ctx.Args().Get(PROGRAM_OPS_IDX)
 	if strings.ToLower(operation) == "map" {
 		if len(args) < 4 {
 			return fmt.Errorf("%s requires additional arguments\n", operation)
 		}
 		// <id> <type> map update key=value
-		subOperation := ctx.Args().Get(3)
-		if strings.ToLower(subOperation) == "update" {
-			if len(args) < 5 {
-				return fmt.Errorf("{%s} on {%s} requires key and value pair be specified\n", subOperation, operation)
+		subOperation := ctx.Args().Get(PROGRAM_MAP_OPS_IDX)
+		switch strings.ToLower(subOperation) {
+		case "update":
+			if len(args) < 6 {
+				return fmt.Errorf("%s on %s requires mapID ('-' if N/A) and key=value pair be specified\n", subOperation, operation)
 			}
-			_, _, err := daemon.ParseKVArgs(ctx.Args().Get(4))
+			_, _, err := daemon.ParseKVArgs(ctx.Args().Get(PROGRAM_MAP_KV_IDX))
 			if err != nil {
-				return fmt.Errorf("{%s} on {%s} requires key and value pair in the format 'key=value'\n", subOperation, operation)
+				return fmt.Errorf("%s on %s requires key and value pair in the format 'key=value'\n", subOperation, operation)
 			}
-
+		case "delete":
+			if len(args) < 6 {
+				return fmt.Errorf("%s on %s requires mapID ('-' if N/A) and key be specified\n", subOperation, operation)
+			}
+		case "dump":
+			if len(args) < 5 {
+				return fmt.Errorf("%s on %s requires mapID (use '-' if N/A) to be specified\n", subOperation, operation)
+			}
+		default:
+			return fmt.Errorf("Unknown map operation %s", subOperation)
 		}
 	}
 	return nil

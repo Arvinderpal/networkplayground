@@ -77,6 +77,7 @@ func (d *Daemon) UpdateMapEntry(dockerID string, args map[string]string) error {
 	}
 
 	progType := args[common.PROGRAM_ARGS_TYPE_FIELD]
+	mapID := args[common.PROGRAM_ARGS_MAP_ID]
 
 	prog := lookupProgram(ep, progType)
 	if prog == nil {
@@ -88,7 +89,7 @@ func (d *Daemon) UpdateMapEntry(dockerID string, args map[string]string) error {
 		return err
 	}
 
-	if err := prog.UpdateElement(key, value); err != nil {
+	if err := prog.UpdateElement(key, value, mapID); err != nil {
 		return err
 	}
 
@@ -97,6 +98,32 @@ func (d *Daemon) UpdateMapEntry(dockerID string, args map[string]string) error {
 
 func (d *Daemon) DeleteMapEntry(dockerID string, args map[string]string) error {
 	logger.Debugf("Deleting Map entry for container %q ...", dockerID)
+
+	// look up ep associated with dockerID
+	ep := d.lookupRegulusEndPoint(dockerID)
+	if ep == nil {
+		return fmt.Errorf("Could not find endpoint associated with %s", dockerID)
+	}
+
+	err := validateProgramArgs(args)
+	if err != nil {
+		return err
+	}
+
+	progType := args[common.PROGRAM_ARGS_TYPE_FIELD]
+	mapID := args[common.PROGRAM_ARGS_MAP_ID]
+
+	prog := lookupProgram(ep, progType)
+	if prog == nil {
+		return fmt.Errorf("Program {%q} not found for container id {%q}", progType)
+	}
+
+	key := args[common.PROGRAM_ARGS_MAP_KEY]
+
+	if err := prog.DeleteElement(key, mapID); err != nil {
+		return err
+	}
+
 	return nil
 }
 

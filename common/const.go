@@ -73,5 +73,7 @@ const (
 	PROGRAM_ARGS_DOCKERID_FIELD  = "program-docker-id"
 	PROGRAM_ARGS_TYPE_FIELD      = "program-type"
 	PROGRAM_ARGS_OPERATION_FIELD = "program-operation"
+	PROGRAM_ARGS_MAP_ID          = "program-map-id"
 	PROGRAM_ARGS_MAP_KV_PAIR     = "program-kv-pair"
+	PROGRAM_ARGS_MAP_KEY         = "program-key"
 )

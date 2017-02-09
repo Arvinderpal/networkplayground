@@ -48,10 +48,22 @@ cd /usr/share/bcc
 # Regulus #
 ###########
 ./regulus daemon run -debug -D /root/go/src/github.com/networkplayground/bpf --d eth1 --n 192.168.80.201 
+
+# Programs 
+
+./regulus daemon program 25352cbdebe21636ece5d3e522cee455f080a4d68aa4787f130768928eff0f4f L1 start
+./regulus daemon program 25352cbdebe21636ece5d3e522cee455f080a4d68aa4787f130768928eff0f4f L1 map update - 10.0.2.66=200
+./regulus daemon program 25352cbdebe21636ece5d3e522cee455f080a4d68aa4787f130768928eff0f4f L1 map dump - 
+./regulus daemon program 25352cbdebe21636ece5d3e522cee455f080a4d68aa4787f130768928eff0f4f L1 map delete - 10.0.2.66
+
+# G3maps
 ./regulus daemon g3map list
 ./regulus daemon g3map update 10.0.2.66=200
 ./regulus daemon g3map delete 10.0.2.66
+
+# Monitor
 ./regulus monitor
+
 ###########
 # Vagrant #
 ###########

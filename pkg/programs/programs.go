@@ -38,7 +38,8 @@ type Program interface {
 	Start() error
 	Stop() error
 	// map functions
-	UpdateElement(k string, v string) error
+	UpdateElement(k string, v string, mapID string) error
+	DeleteElement(k string, mapID string) error
 	Dump2String(mapID string) (string, error)
 }
 
