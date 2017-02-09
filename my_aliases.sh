@@ -47,7 +47,7 @@ cd /usr/share/bcc
 ###########
 # Regulus #
 ###########
-./regulus daemon run -D /root/go/src/github.com/networkplayground/bpf --d eth1 --n 192.168.80.201 
+./regulus daemon run -debug -D /root/go/src/github.com/networkplayground/bpf --d eth1 --n 192.168.80.201 
 ./regulus daemon g3map list
 ./regulus daemon g3map update 10.0.2.66=200
 ./regulus daemon g3map delete 10.0.2.66

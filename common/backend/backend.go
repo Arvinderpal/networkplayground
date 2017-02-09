@@ -39,6 +39,15 @@ type gmaps interface {
 	G3MapDelete(string) error
 }
 
+type programs interface {
+	StartProgram(dockerID string, args map[string]string) error
+	StopProgram(dockerID string, args map[string]string) error
+	// GetMapEntry(map[string]string) (string, error)
+	UpdateMapEntry(dockerID string, args map[string]string) error
+	DeleteMapEntry(dockerID string, args map[string]string) error
+	DumpMap2String(dockerID, progType, mapID string) (string, error)
+}
+
 type control interface {
 	Ping() (*types.PingResponse, error)
 	Update(opts option.OptionMap) error
@@ -49,6 +58,7 @@ type control interface {
 type RegulusBackend interface {
 	bpfBackend
 	gmaps
+	programs
 	control
 }
 

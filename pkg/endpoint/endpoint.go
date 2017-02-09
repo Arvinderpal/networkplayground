@@ -22,6 +22,7 @@ import (
 	// "github.com/cilium/cilium/bpf/policymap"
 	"github.com/networkplayground/pkg/mac"
 	"github.com/networkplayground/pkg/option"
+	"github.com/networkplayground/pkg/programs"
 
 	"github.com/op/go-logging"
 )
@@ -50,10 +51,8 @@ type Endpoint struct {
 	NodeMAC mac.MAC `json:"node-mac"` // Node MAC address.
 	NodeIP  net.IP  `json:"node-ip"`  // Node IPv4/6 address.
 
-	// PortMap          []PortMap             `json:"port-mapping"`       // Port mapping used for this endpoint.
-
-	// BPF Maps attached to container
-	// PolicyMap        *policymap.PolicyMap  `json:"-"`
+	// BPFs attached to container
+	Programs []programs.Program `json:"-"`
 
 	// Consumable       *policy.Consumable    `json:"consumable"`
 	Opts   *option.BoolOptions `json:"options"` // Endpoint bpf options.
@@ -164,8 +163,10 @@ func (e *Endpoint) DeepCopy() *Endpoint {
 	copy(cpy.NodeIP, e.NodeIP)
 	// copy(cpy.PortMap, e.PortMap)
 
-	// if e.PolicyMap != nil {
-	// 	cpy.PolicyMap = e.PolicyMap.DeepCopy()
+	// TODO(awander): should be copy the Programs as well?
+
+	// if e.GenericMap != nil {
+	// 	cpy.GenericMap = e.GenericMap.DeepCopy()
 	// }
 	if e.Opts != nil {
 		cpy.Opts = e.Opts.DeepCopy()
@@ -192,4 +193,27 @@ func (ep *Endpoint) SetDefaultOpts(opts *option.BoolOptions) {
 	// 	// Lets keep this here to prevent users to hurt themselves.
 	// 	ep.Opts.SetIfUnset(OptionLearnTraffic, false)
 	// }
+}
+
+func (e *Endpoint) LogStatus(code StatusCode, msg string) {
+	e.Status.indexMU.Lock()
+	defer e.Status.indexMU.Unlock()
+	sts := &statusLog{
+		Status: Status{
+			Code: code,
+			Msg:  msg,
+		},
+		Timestamp: time.Now(),
+	}
+	e.Status.addStatusLog(sts)
+}
+
+func (e *Endpoint) LogStatusOK(msg string) {
+	e.Status.indexMU.Lock()
+	defer e.Status.indexMU.Unlock()
+	sts := &statusLog{
+		Status:    NewStatusOK(msg),
+		Timestamp: time.Now(),
+	}
+	e.Status.addStatusLog(sts)
 }

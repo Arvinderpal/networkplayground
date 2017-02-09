@@ -133,6 +133,120 @@ func (router *Router) g3MapDump(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (router *Router) programStart(w http.ResponseWriter, r *http.Request) {
+	var args map[string]string
+	vars := mux.Vars(r)
+	dockerID, exists := vars["dockerID"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty docker id"))
+		return
+	}
+	if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	if err := router.daemon.StartProgram(dockerID, args); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
+
+}
+
+func (router *Router) programStop(w http.ResponseWriter, r *http.Request) {
+	var args map[string]string
+	vars := mux.Vars(r)
+	dockerID, exists := vars["dockerID"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty docker id"))
+		return
+	}
+	if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	if err := router.daemon.StopProgram(dockerID, args); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
+
+}
+
+func (router *Router) programUpdateMapEntry(w http.ResponseWriter, r *http.Request) {
+	var args map[string]string
+	vars := mux.Vars(r)
+	dockerID, exists := vars["dockerID"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty docker id"))
+		return
+	}
+	if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	if err := router.daemon.UpdateMapEntry(dockerID, args); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
+
+}
+
+func (router *Router) programDeleteMapEntry(w http.ResponseWriter, r *http.Request) {
+	var args map[string]string
+	vars := mux.Vars(r)
+	dockerID, exists := vars["dockerID"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty docker id"))
+		return
+	}
+	if err := json.NewDecoder(r.Body).Decode(&args); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	if err := router.daemon.DeleteMapEntry(dockerID, args); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
+
+}
+
+func (router *Router) programDumpMap2String(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	dockerID, exists := vars["dockerID"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty docker id"))
+		return
+	}
+	progType, exists := vars["progType"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty program type"))
+		return
+	}
+	mapID, _ := vars["mapID"] // optional
+
+	logger.Debugf("programDumpMap2String: %q", dockerID)
+
+	dump, err := router.daemon.DumpMap2String(dockerID, progType, mapID)
+	if err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	if dump == "" {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(dump); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+
+}
+
 func (router *Router) endpointCreate(w http.ResponseWriter, r *http.Request) {
 
 	d := json.NewDecoder(r.Body)

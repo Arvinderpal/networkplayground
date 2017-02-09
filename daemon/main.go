@@ -104,7 +104,6 @@ func init() {
 						Name:        "k8s-kubeconfig-path",
 						Usage:       "Absolute path to the kubeconfig file",
 					},
-
 					cli.BoolFlag{
 						Name:  "debug",
 						Usage: "Enable debug messages",
@@ -139,6 +138,12 @@ func init() {
 				Usage:     "List, Update, Delete entries in G3Map",
 				Action:    g3mapUpdate,
 				ArgsUsage: "[<list>, <update><ipv4>=<init count>..., <delete><ipv4>...]",
+			},
+			{
+				Name:      "program",
+				Usage:     "Start and Stop Programs and List, Update, Delete entries in Program Maps",
+				Action:    programUpdate,
+				ArgsUsage: "<docker container id> <program name> <start/stop/map> <map operation> <map args>",
 			},
 		},
 	}
@@ -366,10 +371,12 @@ func g3mapUpdate(ctx *cli.Context) {
 	}
 	first := ctx.Args().First()
 	if first == "list" {
-		if err := dumpG3Map(client); err != nil {
-			fmt.Errorf("Could not list G2Map: %s", err)
+		dump, err := client.G3MapDump()
+		if err != nil {
+			fmt.Fprint(os.Stderr, "Could not retrieve G3Map: %s\n", err)
 			os.Exit(1)
 		}
+		printDump(dump)
 		os.Exit(0)
 	} else if first == "update" {
 		dOpts := make(map[string]string, len(opts))
@@ -377,7 +384,7 @@ func g3mapUpdate(ctx *cli.Context) {
 			fmt.Fprintf(os.Stderr, "Expected 2 options to g3map update but got: %s", len(opts))
 			os.Exit(1)
 		}
-		name, value, err := ParseArgsG3MapUpdate(opts[1])
+		name, value, err := daemon.ParseKVArgs(opts[1])
 		if err != nil {
 			fmt.Printf("%s\n", err)
 			os.Exit(1)
@@ -407,16 +414,113 @@ func g3mapUpdate(ctx *cli.Context) {
 	}
 }
 
-func dumpG3Map(client *rclient.Client) error {
+func printDump(dump string) {
 
-	n, err := client.G3MapDump()
-	if err != nil {
-		return fmt.Errorf("Could not retrieve G2Map: %s\n", err)
-	}
-
-	strs := strings.Split(n, `\n`)
+	strs := strings.Split(dump, `\n`)
 	for _, s := range strs {
 		fmt.Println(s)
+	}
+}
+
+func programUpdate(ctx *cli.Context) {
+	var (
+		client *rclient.Client
+		err    error
+	)
+
+	if host := ctx.GlobalString("host"); host == "" {
+		client, err = rclient.NewDefaultClient()
+	} else {
+		client, err = rclient.NewClient(host, nil)
+	}
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error while creating regulus-client: %s\n", err)
+		os.Exit(1)
+	}
+
+	err = validateProgramCmdInputs(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Input validation failed: %s", err)
+		os.Exit(1)
+	}
+
+	dockerID := ctx.Args().Get(0)
+	progType := ctx.Args().Get(1)
+	operation := ctx.Args().Get(2)
+
+	dOpts := make(map[string]string, len(ctx.Args()))
+	dOpts[common.PROGRAM_ARGS_TYPE_FIELD] = progType
+	dOpts[common.PROGRAM_ARGS_OPERATION_FIELD] = operation
+
+	switch strings.ToLower(operation) {
+	case "start":
+		err = client.StartProgram(dockerID, dOpts)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to perform {%s} for program type {%s} on container {%s}: %s\n", operation, progType, dockerID, err)
+			os.Exit(1)
+		}
+	case "stop":
+		err = client.StopProgram(dockerID, dOpts)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to perform {%s} for program type {%s} on container {%s}: %s\n", operation, progType, dockerID, err)
+			os.Exit(1)
+		}
+	case "map":
+		mapOperation := ctx.Args().Get(3)
+		switch mapOperation {
+		case "dump":
+			dump, err := client.DumpMap2String(dockerID, progType, "empty")
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Unable to perform {%s} {%s} for program type {%s} on container {%s}: %s \n", mapOperation, operation, progType, dockerID, err)
+				os.Exit(1)
+			}
+			printDump(dump)
+		case "update":
+			// update can contain a single key value pair in the format: "key=value"
+			dOpts[common.PROGRAM_ARGS_MAP_KV_PAIR] = ctx.Args().Get(4)
+			if err := client.UpdateMapEntry(dockerID, dOpts); err != nil {
+				fmt.Errorf("Could not list {%s}: %s", err)
+				os.Exit(1)
+			}
+		case "delete":
+			if err := client.DeleteMapEntry(dockerID, dOpts); err != nil {
+				fmt.Errorf("Could not list {%s}: %s", err)
+				os.Exit(1)
+			}
+		default:
+			fmt.Fprintf(os.Stderr, "Unable to perform {%s} for program type {%s} on container {%s}: Unknown map operation {%s} \n", operation, progType, dockerID, mapOperation)
+			os.Exit(1)
+		}
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown Operation %s", operation)
+		os.Exit(1)
+	}
+
+}
+
+func validateProgramCmdInputs(ctx *cli.Context) error {
+	args := ctx.Args()
+	if len(args) < 3 {
+		return fmt.Errorf("Insufficient arguments provided\n")
+	}
+	operation := ctx.Args().Get(2)
+	if strings.ToLower(operation) == "map" {
+		if len(args) < 4 {
+			return fmt.Errorf("%s requires additional arguments\n", operation)
+		}
+		// <id> <type> map update key=value
+		subOperation := ctx.Args().Get(3)
+		if strings.ToLower(subOperation) == "update" {
+			if len(args) < 5 {
+				return fmt.Errorf("{%s} on {%s} requires key and value pair be specified\n", subOperation, operation)
+			}
+			_, _, err := daemon.ParseKVArgs(ctx.Args().Get(4))
+			if err != nil {
+				return fmt.Errorf("{%s} on {%s} requires key and value pair in the format 'key=value'\n", subOperation, operation)
+			}
+
+		}
 	}
 	return nil
 }
@@ -424,6 +528,7 @@ func dumpG3Map(client *rclient.Client) error {
 func initEnv(ctx *cli.Context) error {
 	config.OptsMU.Lock()
 	if ctx.Bool("debug") {
+		log.Info("Debuging is enabled")
 		common.SetupLOG(log, "DEBUG")
 		config.Opts.Set(OptionDebug, true)
 	} else {

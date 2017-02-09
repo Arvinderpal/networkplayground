@@ -41,6 +41,13 @@ const (
 	BPFG3Map     = BPFRegulusMaps + "/regulus_g3"
 	G3MapMaxKeys = 0xFFFF
 
+	MaxKeys = 0xFFFF
+
+	// Container Specific Maps:
+	// Path prefix to endpoint specific l1 map
+	L1MapName = "ep_l1_"
+	L1MapPath = BPFRegulusMaps + "/" + L1MapName
+
 	// RFC3339Milli is the RFC3339 with milliseconds for the default timestamp format
 	// log files.
 	RFC3339Milli = "2006-01-02T15:04:05.000Z07:00"
@@ -60,4 +67,11 @@ const (
 	CHeaderFileName = "lxc_config.h"
 	// Name of the header file used for bpf_netdev.c and bpf_overlay.c
 	NetdevHeaderFileName = "netdev_config.h"
+)
+
+const (
+	PROGRAM_ARGS_DOCKERID_FIELD  = "program-docker-id"
+	PROGRAM_ARGS_TYPE_FIELD      = "program-type"
+	PROGRAM_ARGS_OPERATION_FIELD = "program-operation"
+	PROGRAM_ARGS_MAP_KV_PAIR     = "program-kv-pair"
 )

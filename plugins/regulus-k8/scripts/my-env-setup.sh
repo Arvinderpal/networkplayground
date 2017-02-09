@@ -88,11 +88,11 @@ REGULUS_EXAMPLES_DIR="$REGULUS_HOME/plugins/regulus-k8/scripts/examples"
 #function k8createbusybox () {
 #	k8c run -i --tty "$@" --image=busybox --restart=Never -- sh --tty 
 #}
-alias k8createbb1="k8create ${REGULUS_EXAMPLES_DIR}/mypods/bb1.yml"
-alias k8createbb2="k8create ${REGULUS_EXAMPLES_DIR}/mypods/bb2.yml"
-alias k8createnginx="k8create ${K8_HOME}/docs/user-guide/pod.yaml"
-alias k8createnginxreplicas="k8create run my-nginx --image=nginx --replicas=2 --port=80"
-alias k8createfoonamespace_redis="k8create ${REGULUS_EXAMPLES_DIR}/mypods/redis_foo_ns.yml"
+alias k8create_bb1="k8create ${REGULUS_EXAMPLES_DIR}/mypods/bb1.yml"
+alias k8create_bb2="k8create ${REGULUS_EXAMPLES_DIR}/mypods/bb2.yml"
+alias k8create_nginx="k8create ${K8_HOME}/docs/user-guide/pod.yaml"
+alias k8create_nginxreplicas="k8create run my-nginx --image=nginx --replicas=2 --port=80"
+alias k8create_redis_django="k8create ${REGULUS_EXAMPLES_DIR}/mypods/redis_and_django.yml"
 
 # Namespaces
 alias k8nsget="k8c get namespaces"

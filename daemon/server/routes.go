@@ -54,6 +54,26 @@ func (r *Router) initBackendRoutes() {
 		route{
 			"G3MapDel", "DELETE", "/g3map/{ip}", r.g3MapDel,
 		},
+		// program handlers
+		route{
+			"ProgramStart", "POST", "/program/{dockerID}", r.programStart,
+		},
+		route{
+			"ProgramStop", "DELETE", "/program/{dockerID}", r.programStop,
+		},
+		// program map handlers
+		route{
+			"ProgramUpdateMapEntry", "POST", "/programmap/update/{dockerID}", r.programUpdateMapEntry,
+		},
+		route{
+			"ProgramDeleteMapEntry", "DELETE", "/programmap/{dockerID}", r.programDeleteMapEntry,
+		},
+		route{
+			"ProgramDumpMap2String", "GET", "/programmap/dump/{dockerID}/{progType}/{mapID}", r.programDumpMap2String,
+		},
+		// route{
+		// 	"ProgramGetMapEntry", "GET", "/programmap/{dockerID}", r.programMapGet,
+		// },
 
 		// endpoint handlers:
 		route{

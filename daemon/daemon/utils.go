@@ -17,25 +17,12 @@ import (
 	"strings"
 )
 
-// will parse arguments into key and value string pair
-func ParseArgsG1Map(arg string) (string, string, error) {
+// ParseKVArgs will parse input strign with format "key=value" and return key, value strings.
+func ParseKVArgs(arg string) (string, string, error) {
 
 	optionSplit := strings.SplitN(arg, "=", 2)
-	key := optionSplit[0]
 	if len(optionSplit) > 1 {
-		return key, optionSplit[1], nil
+		return optionSplit[0], optionSplit[1], nil
 	}
-	return "", "", fmt.Errorf("No value specified for key: %s", optionSplit[0])
-}
-
-func ParseArgsG2Map(arg string) (string, string, error) {
-
-	optionSplit := strings.SplitN(arg, "=", 2)
-	key := optionSplit[0]
-	if len(optionSplit) > 1 {
-		if optionSplit[1] == "insert" || optionSplit[1] == "delete" {
-			return key, optionSplit[1], nil
-		}
-	}
-	return "", "", fmt.Errorf("Invalid key/value specified")
+	return "", "", fmt.Errorf("Invalid key/value specified: %s", arg)
 }

@@ -230,3 +230,21 @@ func (d *Daemon) EndpointsGet() ([]endpoint.Endpoint, error) {
 	}
 	return eps, nil
 }
+
+func (d *Daemon) createBPFMAPs(epID string) error {
+	d.endpointsMU.Lock()
+	defer d.endpointsMU.Unlock()
+	return nil
+	// ep, ok := d.endpointsDocker[epID]
+	// if !ok {
+	// 	return fmt.Errorf("endpoint %d not found", epID)
+	// }
+
+	// err := d.regenerateBPF(ep, filepath.Join(".", strconv.Itoa(int(ep.ID))))
+	// if err != nil {
+	// 	ep.logStatus(endpoint.Failure, err.Error())
+	// } else {
+	// 	ep.logStatusOK("Regenerated BPF code")
+	// }
+	// return err
+}
