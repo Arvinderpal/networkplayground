@@ -12,7 +12,12 @@
 //
 package programs
 
-import "fmt"
+import (
+	"fmt"
+	"net"
+
+	"github.com/networkplayground/pkg/mac"
+)
 
 type ProgramType int
 
@@ -33,6 +38,19 @@ func (t ProgramType) String() string {
 	return "Unknown"
 }
 
+type ProgramConf struct {
+	// These are populated by the EndPoint object:
+	DockerID        string  `json:"docker-id"`       // Docker ID.
+	HostSideIfIndex int     `json:"interface-index"` // Host's interface index.
+	HostSideMAC     mac.MAC `json:"host-side-mac"`   // Host side veth MAC address.
+	MAC             mac.MAC `json:"mac"`             // Container MAC address.
+	IPv4            net.IP  `json:"ipv4"`            // Container IPv4 address.
+
+	// These are set inside the program code
+	RunDir string `json:"rundir"` // where the bpf .o is kept among other things
+	LibDir string `json:"libdir"` // where the bpf program code (.c and .sh)  files are
+}
+
 type Program interface {
 	Type() ProgramType
 	Start() error
@@ -43,10 +61,10 @@ type Program interface {
 	Dump2String(mapID string) (string, error)
 }
 
-func CreateProgram(dockerID, progType string) (Program, error) {
+func CreateProgram(dockerID, progType string, conf ProgramConf) (Program, error) {
 	switch progType {
 	case "L1":
-		return NewL1Program(dockerID), nil
+		return NewL1Program(dockerID, conf), nil
 		// case "L2":
 		// return NewL2Program(), nil
 	}

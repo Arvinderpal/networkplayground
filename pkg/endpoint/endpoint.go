@@ -217,3 +217,15 @@ func (e *Endpoint) LogStatusOK(msg string) {
 	}
 	e.Status.addStatusLog(sts)
 }
+
+func (e *Endpoint) GenProgramConf() programs.ProgramConf {
+
+	return programs.ProgramConf{
+		DockerID:        e.DockerID,
+		HostSideIfIndex: e.IfIndex,
+		HostSideMAC:     e.NodeMAC,
+		MAC:             e.MAC,
+		IPv4:            e.IPv4,
+	}
+
+}

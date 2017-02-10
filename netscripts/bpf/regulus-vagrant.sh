@@ -65,12 +65,18 @@ function regulus_add_cni(){
 	mkdir -p /opt/cni/bin
 	cp bin/host-local loopback /opt/cni/bin
 
-	# build and install regulus cni binaries
-	cd "${REGULUS_HOME}/plugins/regulus-k8/cni"
+	cd "${REGULUS_HOME}/plugins/regulus-k8/cni-bridge"
 	make clean
 	make 
-	# install will also put 10-regulus-cni.conf in /etc/cni/net.d
-	make install
+	make install # install will also put cni-bridge.conf in /etc/cni/net.d
+
+	# FIXME(awander): disabled ovs cni plugin
+	# # build and install regulus cni binaries
+	# cd "${REGULUS_HOME}/plugins/regulus-k8/cni"
+	# make clean
+	# make 
+	# # install will also put 10-regulus-cni.conf in /etc/cni/net.d
+	# make install
 
 }
 

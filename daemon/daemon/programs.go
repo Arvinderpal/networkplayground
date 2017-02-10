@@ -40,12 +40,15 @@ func (d *Daemon) StartProgram(dockerID string, args map[string]string) error {
 		return fmt.Errorf("Program already exits")
 	}
 
-	newProg, err := programs.CreateProgram(dockerID, progType)
+	newProg, err := programs.CreateProgram(dockerID, progType, ep.GenProgramConf())
 	if err != nil {
 		return err
 	}
 
-	go newProg.Start()
+	err = newProg.Start()
+	if err != nil {
+		return err
+	}
 
 	ep.Programs = append(ep.Programs, newProg)
 	return nil

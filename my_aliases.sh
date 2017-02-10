@@ -49,12 +49,12 @@ cd /usr/share/bcc
 ###########
 ./regulus daemon run -debug -D /root/go/src/github.com/networkplayground/bpf --d eth1 --n 192.168.80.201 
 
-# Programs 
+# Programs 618b0d72d98f2c37cd25e7105a83560179f2f9516044fe17a4d6b69f4a37ce60
 
-./regulus daemon program 25352cbdebe21636ece5d3e522cee455f080a4d68aa4787f130768928eff0f4f L1 start
-./regulus daemon program 25352cbdebe21636ece5d3e522cee455f080a4d68aa4787f130768928eff0f4f L1 map update - 10.0.2.66=200
-./regulus daemon program 25352cbdebe21636ece5d3e522cee455f080a4d68aa4787f130768928eff0f4f L1 map dump - 
-./regulus daemon program 25352cbdebe21636ece5d3e522cee455f080a4d68aa4787f130768928eff0f4f L1 map delete - 10.0.2.66
+./regulus daemon program 618b0d72d98f2c37cd25e7105a83560179f2f9516044fe17a4d6b69f4a37ce60 L1 start
+./regulus daemon program 618b0d72d98f2c37cd25e7105a83560179f2f9516044fe17a4d6b69f4a37ce60 L1 map update - 10.1.2.30=200
+./regulus daemon program 618b0d72d98f2c37cd25e7105a83560179f2f9516044fe17a4d6b69f4a37ce60 L1 map dump - 
+./regulus daemon program 618b0d72d98f2c37cd25e7105a83560179f2f9516044fe17a4d6b69f4a37ce60 L1 map delete - 10.0.2.66
 
 # G3maps
 ./regulus daemon g3map list
@@ -104,6 +104,14 @@ mkdir -p /home/vagrant/linux/build/linux-4.9-rc5
 make O=/home/vagrant/linux/build/linux-4.9-rc5 olddefconfig
 make O=/home/vagrant/linux/build/linux-4.9-rc5
 make O=/home/vagrant/linux/build/linux-4.9-rc5 modules_install install
+
+
+
+###########
+#    tc   #
+###########
+tc qdisc show
+
 
 ###########
 # tcpdump #

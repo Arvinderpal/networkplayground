@@ -16,11 +16,15 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net"
+	"os/exec"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"unsafe"
 
 	"github.com/networkplayground/common"
 	"github.com/networkplayground/pkg/bpf"
+	"github.com/vishvananda/netlink"
 )
 
 // binary representation for encoding in binary structs
@@ -36,10 +40,11 @@ func (v4 IPv4) String() string {
 
 type L1Program struct {
 	ProgramType ProgramType
+	Conf        ProgramConf
 	Map         *bpf.Map
 }
 
-func NewL1Program(dockerID string) *L1Program {
+func NewL1Program(dockerID string, conf ProgramConf) *L1Program {
 
 	// create l1 map
 	l1map := bpf.NewMap(common.L1MapPath+dockerID,
@@ -48,8 +53,13 @@ func NewL1Program(dockerID string) *L1Program {
 		int(unsafe.Sizeof(L1MapValue{})),
 		common.MaxKeys)
 
+	// TODO (awander): need to agree on some standard location where all sources will be kept: DefaultLibDir = "/usr/lib/regulus"
+	conf.LibDir = "/root/go/src/github.com/networkplayground/bpf"
+	conf.RunDir = common.RegulusPath + "/" + dockerID
+
 	return &L1Program{
 		ProgramType: ProgramTypeL1,
+		Conf:        conf,
 		Map:         l1map,
 	}
 }
@@ -61,10 +71,49 @@ func (p *L1Program) Type() ProgramType {
 func (p *L1Program) Start() error {
 
 	// compile bpf program and attach it
+	err := p.compileBase()
+	if err != nil {
+		return fmt.Errorf("Start failed: %s", err)
+	}
 	return nil
 }
 
 func (p *L1Program) Stop() error {
+
+	// remove bpf, delete map, ...
+	return nil
+}
+
+func (p *L1Program) compileBase() error {
+	var args []string
+	var mode string
+	var ifName string
+
+	// if err := d.writeNetdevHeader("./"); err != nil {
+	// 	logger.Warningf("Unable to write netdev header: %s\n", err)
+	// 	return err
+	// }
+
+	if p.Conf.HostSideIfIndex != 0 {
+		hostVeth, err := netlink.LinkByIndex(p.Conf.HostSideIfIndex)
+		if err != nil {
+			return fmt.Errorf("Error while fetching Link for veth index %v with MAC %s: %s", p.Conf.HostSideIfIndex, p.Conf.HostSideMAC, err)
+		}
+		ifName = hostVeth.Attrs().Name
+		mode = "direct"
+
+		args = []string{p.Conf.LibDir, p.Conf.RunDir, mode, ifName}
+	}
+
+	//./init.sh /usr/lib/regulus /var/run/regulus direct eth1
+	out, err := exec.Command(filepath.Join(p.Conf.LibDir, "init.sh"), args...).CombinedOutput()
+	if err != nil {
+		fmt.Errorf("Command execution %s %s failed: %s : Command output:\n%s",
+			filepath.Join(p.Conf.LibDir, "init.sh"),
+			strings.Join(args, " "), err, out)
+		return err
+	}
+
 	return nil
 }
 
