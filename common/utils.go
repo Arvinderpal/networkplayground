@@ -23,6 +23,37 @@ import (
 	l "github.com/op/go-logging"
 )
 
+// goArray2C transforms a byte slice into its hexadecimal string representation.
+// Example:
+// array := []byte{0x12, 0xFF, 0x0, 0x01}
+// fmt.Print(GoArray2C(array)) // "{ 0x12, 0xff, 0x0, 0x1 }"
+func goArray2C(array []byte) string {
+	ret := "{ "
+	for i, e := range array {
+		if i == 0 {
+			ret = ret + fmt.Sprintf("%#x", e)
+		} else {
+			ret = ret + fmt.Sprintf(", %#x", e)
+		}
+	}
+
+	return ret + " }"
+}
+
+// FmtDefineAddress returns the a define string from the given name and addr.
+// Example:
+// fmt.Print(FmtDefineAddress("foo", []byte{1, 2, 3})) // "#define foo { .addr = { 0x1, 0x2, 0x3 } }\n"
+func FmtDefineAddress(name string, addr []byte) string {
+	return fmt.Sprintf("#define %s { .addr = %s }\n", name, goArray2C(addr))
+}
+
+// FmtDefineArray returns the a define string from the given name and array.
+// Example:
+// fmt.Print(FmtDefineArray("foo", []byte{1, 2, 3})) // "#define foo { 0x1, 0x2, 0x3 }\n"
+func FmtDefineArray(name string, array []byte) string {
+	return fmt.Sprintf("#define %s %s\n", name, goArray2C(array))
+}
+
 // SetupLOG sets up logger with the correct parameters
 func SetupLOG(logger *l.Logger, logLevel string) {
 	hostname, _ := os.Hostname()

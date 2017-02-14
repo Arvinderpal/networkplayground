@@ -13,9 +13,11 @@
 package programs
 
 import (
+	"bufio"
 	"encoding/hex"
 	"fmt"
 	"net"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -26,6 +28,18 @@ import (
 	"github.com/networkplayground/pkg/bpf"
 	"github.com/vishvananda/netlink"
 )
+
+/*
+* L1 is a simple program that counts packets recieved by the container.
+ The code has these major components:
+ 1. go code: (this file) is responsible
+		i. compiling and starting the bpf program which runs in kernel space
+		ii. creating the map resource which will be sharred with kernel bpf and userspace. Note that the c program must know the map name which we define as "ep_l1_" + Docker ID (see MapName)
+		iii. userspace program that can interact with the bpf map
+ 2. C code: (kernel bpf) this code consists of a .c file which performs the 	necessary function:
+		i.	the .c file is in the library/bpf/networking/l1 directory
+		ii. the .h file is generated here (see writeBPFHeader()) and contains various definitions customized to the container. Since the file is different from one container to another, it is kept in the run directory (/var/run/regulus/<docker id>)
+*/
 
 // binary representation for encoding in binary structs
 type IPv4 [4]byte
@@ -42,6 +56,16 @@ type L1Program struct {
 	ProgramType ProgramType
 	Conf        ProgramConf
 	Map         *bpf.Map
+}
+
+const (
+	L1BPFSrcDir     = "/networking/l1"
+	CHeaderFilePath = "/l1.h"
+	L1MapNamePrefix = "ep_l1_"
+)
+
+func constructMapName(prefix, dockerID string) string {
+	return prefix + dockerID
 }
 
 func NewL1Program(dockerID string, conf ProgramConf) *L1Program {
@@ -84,15 +108,56 @@ func (p *L1Program) Stop() error {
 	return nil
 }
 
+func (p *L1Program) writeBPFHeader() error {
+	headerPath := filepath.Join(p.Conf.RunDir, CHeaderFilePath)
+	f, err := os.Create(headerPath)
+	if err != nil {
+		return fmt.Errorf("failed to open file %s for writing: %s", headerPath, err)
+
+	}
+	defer f.Close()
+
+	fw := bufio.NewWriter(f)
+
+	fmt.Fprint(fw, "/*\n")
+
+	fmt.Fprintf(fw, ""+
+		" * Docker Container ID: %s\n"+
+		" * Map Name: %s\n"+
+		" * MAC: %s\n"+
+		" * IPv4 address: %s\n"+
+		" * Host Side MAC: %s\n"+
+		" * Host Side Interface Index: %q\n"+
+		" */\n\n",
+		p.Conf.DockerID, constructMapName(L1MapNamePrefix, p.Conf.DockerID),
+		p.Conf.MAC, p.Conf.IPv4.String(),
+		p.Conf.HostSideMAC, p.Conf.HostSideIfIndex)
+
+	fmt.Fprintf(fw, "#define DOCKER_ID %s\n", p.Conf.DockerID)
+	fmt.Fprintf(fw, "#define MAP_NAME %s\n", constructMapName(L1MapNamePrefix, p.Conf.DockerID))
+	fw.WriteString(common.FmtDefineAddress("CONTAINER_MAC", p.Conf.MAC))
+	fw.WriteString(common.FmtDefineAddress("CONTAINER_IP", p.Conf.IPv4))
+	// fmt.Fprintf(fw, "#define CONTAINER_IP %#x\n", binary.BigEndian.Uint32(p.Conf.IPv4))
+	fw.WriteString(common.FmtDefineAddress("CONTAINER_HOST_SIDE_MAC", p.Conf.HostSideMAC))
+	fmt.Fprintf(fw, "#define CONTAINER_HOST_SIDE_IFC_IDX %d\n", p.Conf.HostSideIfIndex)
+
+	// Endpoint options
+	// NOTE(awander): good way to pass defines directly from cli to bpf:
+	// fw.WriteString(ep.Opts.GetFmtList())
+
+	fw.WriteString("\n")
+
+	return fw.Flush()
+}
+
 func (p *L1Program) compileBase() error {
 	var args []string
 	var mode string
 	var ifName string
 
-	// if err := d.writeNetdevHeader("./"); err != nil {
-	// 	logger.Warningf("Unable to write netdev header: %s\n", err)
-	// 	return err
-	// }
+	if err := p.writeBPFHeader(); err != nil {
+		return fmt.Errorf("Unable to create BPF header file: %s", err)
+	}
 
 	if p.Conf.HostSideIfIndex != 0 {
 		hostVeth, err := netlink.LinkByIndex(p.Conf.HostSideIfIndex)
@@ -106,10 +171,10 @@ func (p *L1Program) compileBase() error {
 	}
 
 	//./init.sh /usr/lib/regulus /var/run/regulus direct eth1
-	out, err := exec.Command(filepath.Join(p.Conf.LibDir, "init.sh"), args...).CombinedOutput()
+	out, err := exec.Command(filepath.Join(p.Conf.LibDir, L1BPFSrcDir+"/init.sh"), args...).CombinedOutput()
 	if err != nil {
 		fmt.Errorf("Command execution %s %s failed: %s : Command output:\n%s",
-			filepath.Join(p.Conf.LibDir, "init.sh"),
+			filepath.Join(p.Conf.LibDir, L1BPFSrcDir+"/init.sh"),
 			strings.Join(args, " "), err, out)
 		return err
 	}

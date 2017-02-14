@@ -41,7 +41,7 @@ function regulus_env_setup(){
 
 	echo "export REGULUS_HOME=${REGULUS_HOME}" >> "${USER_HOME}/.bashrc"
 	# bpf/ contains regulus scripts like init.sh
-	REGULUS_PATHS="${REGULUS_PATHS}:${REGULUS_HOME}:${REGULUS_HOME}/bpf"
+	REGULUS_PATHS="${REGULUS_PATHS}:${REGULUS_HOME}:${REGULUS_HOME}/bpf:${REGULUS_HOME}/regulus"
 	
 	echo "export GOPATH=${USER_GOPATH}" >> "${USER_HOME}/.bashrc"
 	REGULUS_PATHS="${REGULUS_PATHS}:${USER_GOPATH}/bin"
