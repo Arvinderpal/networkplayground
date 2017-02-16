@@ -47,6 +47,25 @@ func (cli Client) StopProgram(dockerID string, args map[string]string) error {
 	return nil
 }
 
+func (cli Client) LookupMapEntry(dockerID, progType, mapID, key string) (string, error) {
+
+	serverResp, err := cli.R().Get("/programmap/" + dockerID + "/" + progType + "/" + mapID + "/" + key)
+	if err != nil {
+		return "", fmt.Errorf("error while connecting to daemon: %s", err)
+	}
+
+	if serverResp.StatusCode() != http.StatusNoContent &&
+		serverResp.StatusCode() != http.StatusOK {
+		return "", processErrorBody(serverResp.Body(), nil)
+	}
+
+	if serverResp.StatusCode() == http.StatusNoContent {
+		return "", nil
+	}
+
+	return string(serverResp.Body()), nil
+}
+
 func (cli Client) UpdateMapEntry(dockerID string, args map[string]string) error {
 
 	serverResp, err := cli.R().SetBody(args).Post("/programmap/update/" + dockerID)
@@ -79,7 +98,7 @@ func (cli Client) DeleteMapEntry(dockerID string, args map[string]string) error 
 
 func (cli Client) DumpMap2String(dockerID, progType, mapID string) (string, error) {
 
-	serverResp, err := cli.R().Get("/programmap/dump/" + dockerID + "/" + progType + "/" + mapID)
+	serverResp, err := cli.R().Get("/programmap-dump/" + dockerID + "/" + progType + "/" + mapID)
 	if err != nil {
 		return "", fmt.Errorf("error while connecting to daemon: %s", err)
 	}

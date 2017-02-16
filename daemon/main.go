@@ -35,14 +35,16 @@ const (
 )
 
 // Programs cli argument indexes
-// <id> <type> <start/stop/map> <dump/update/delete> <key=value>
+// <id> <type> <start/stop> <user options (comman seperated)>
+// <id> <type> <map> <dump/update/delete> <key=value>
 const (
-	DOCKER_ID_IDX       = 0
-	PROGRAM_TYPE_IDX    = 1
-	PROGRAM_OPS_IDX     = 2
-	PROGRAM_MAP_OPS_IDX = 3
-	PROGRAM_MAP_ID_IDX  = 4
-	PROGRAM_MAP_KV_IDX  = 5
+	DOCKER_ID_IDX         = 0
+	PROGRAM_TYPE_IDX      = 1
+	PROGRAM_OPS_IDX       = 2
+	PROGRAM_USER_OPTS_IDX = 3
+	PROGRAM_MAP_OPS_IDX   = 3
+	PROGRAM_MAP_ID_IDX    = 4
+	PROGRAM_MAP_KV_IDX    = 5
 )
 
 var (
@@ -466,12 +468,14 @@ func programUpdate(ctx *cli.Context) {
 
 	switch strings.ToLower(operation) {
 	case "start":
+		dOpts[common.PROGRAM_ARGS_USER_OPTIONS] = ctx.Args().Get(PROGRAM_USER_OPTS_IDX)
 		err = client.StartProgram(dockerID, dOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to perform {%s} for program type {%s} on container {%s}: %s\n", operation, progType, dockerID, err)
 			os.Exit(1)
 		}
 	case "stop":
+		dOpts[common.PROGRAM_ARGS_USER_OPTIONS] = ctx.Args().Get(PROGRAM_USER_OPTS_IDX)
 		err = client.StopProgram(dockerID, dOpts)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Unable to perform {%s} for program type {%s} on container {%s}: %s\n", operation, progType, dockerID, err)
@@ -482,13 +486,14 @@ func programUpdate(ctx *cli.Context) {
 		mapID := ctx.Args().Get(PROGRAM_MAP_ID_IDX)
 		dOpts[common.PROGRAM_ARGS_MAP_ID] = mapID
 		switch mapOperation {
-		case "dump":
-			dump, err := client.DumpMap2String(dockerID, progType, mapID)
+		case "lookup":
+			key := ctx.Args().Get(PROGRAM_MAP_KV_IDX)
+			val, err := client.LookupMapEntry(dockerID, progType, mapID, key)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Unable to perform {%s} {%s} for program type {%s} on container {%s}: %s \n", mapOperation, operation, progType, dockerID, err)
 				os.Exit(1)
 			}
-			printDump(dump)
+			printDump(val)
 		case "update":
 			// update can contain a single key value pair in the format: "key=value"
 			dOpts[common.PROGRAM_ARGS_MAP_KV_PAIR] = ctx.Args().Get(PROGRAM_MAP_KV_IDX)
@@ -502,6 +507,13 @@ func programUpdate(ctx *cli.Context) {
 				fmt.Errorf("Could not list {%s}: %s", err)
 				os.Exit(1)
 			}
+		case "dump":
+			dump, err := client.DumpMap2String(dockerID, progType, mapID)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Unable to perform {%s} {%s} for program type {%s} on container {%s}: %s \n", mapOperation, operation, progType, dockerID, err)
+				os.Exit(1)
+			}
+			printDump(dump)
 		default:
 			fmt.Fprintf(os.Stderr, "Unable to perform {%s} for program type {%s} on container {%s}: Unknown map operation {%s} \n", operation, progType, dockerID, mapOperation)
 			os.Exit(1)
@@ -526,6 +538,10 @@ func validateProgramCmdInputs(ctx *cli.Context) error {
 		// <id> <type> map update key=value
 		subOperation := ctx.Args().Get(PROGRAM_MAP_OPS_IDX)
 		switch strings.ToLower(subOperation) {
+		case "lookup":
+			if len(args) < 6 {
+				return fmt.Errorf("%s on %s requires mapID ('-' if N/A) and key be specified\n", subOperation, operation)
+			}
 		case "update":
 			if len(args) < 6 {
 				return fmt.Errorf("%s on %s requires mapID ('-' if N/A) and key=value pair be specified\n", subOperation, operation)

@@ -53,9 +53,10 @@ type ProgramConf struct {
 
 type Program interface {
 	Type() ProgramType
-	Start() error
-	Stop() error
+	Start(userOpts string) error
+	Stop(userOpts string) error
 	// map functions
+	LookupElement(k, mapID string) (string, error)
 	UpdateElement(k string, v string, mapID string) error
 	DeleteElement(k string, mapID string) error
 	Dump2String(mapID string) (string, error)

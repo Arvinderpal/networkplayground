@@ -14,6 +14,7 @@ package programs
 
 import (
 	"bufio"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"net"
@@ -62,6 +63,7 @@ const (
 	L1BPFSrcDir     = "/networking/l1"
 	CHeaderFilePath = "/l1.h"
 	L1MapNamePrefix = "ep_l1_"
+	MaxKeys         = 4 // should be same in bpf .h file
 )
 
 func constructMapName(prefix, dockerID string) string {
@@ -75,7 +77,7 @@ func NewL1Program(dockerID string, conf ProgramConf) *L1Program {
 		bpf.MapTypeHash,
 		int(unsafe.Sizeof(L1MapKey{})),
 		int(unsafe.Sizeof(L1MapValue{})),
-		common.MaxKeys)
+		MaxKeys)
 
 	// TODO (awander): need to agree on some standard location where all sources will be kept: DefaultLibDir = "/usr/lib/regulus"
 	conf.LibDir = "/root/go/src/github.com/networkplayground/bpf"
@@ -92,19 +94,39 @@ func (p *L1Program) Type() ProgramType {
 	return p.ProgramType
 }
 
-func (p *L1Program) Start() error {
+func (p *L1Program) Start(userOpts string) error {
+
+	err := p.verifyUserOpts(userOpts)
+	if err != nil {
+		return fmt.Errorf("Unable to process user options %s: %s", userOpts, err)
+	}
 
 	// compile bpf program and attach it
-	err := p.compileBase()
+	err = p.compileBase(userOpts)
 	if err != nil {
 		return fmt.Errorf("Start failed: %s", err)
 	}
 	return nil
 }
 
-func (p *L1Program) Stop() error {
+func (p *L1Program) Stop(userOpts string) error {
 
+	err := p.processUserOpts(userOpts)
+	if err != nil {
+		return fmt.Errorf("Unable to process user options %s: %s", userOpts, err)
+	}
 	// remove bpf, delete map, ...
+	return nil
+}
+
+// processUserOpts is program specific function that processes the input passed in with the start/stop commands
+func (p *L1Program) processUserOpts(userOpts string) error {
+	return nil
+}
+
+func (p *L1Program) verifyUserOpts(userOpts string) error {
+
+	// userOpts can be either of these: egress / ingress,egress / anything else implies ingress only
 	return nil
 }
 
@@ -136,8 +158,31 @@ func (p *L1Program) writeBPFHeader() error {
 	fmt.Fprintf(fw, "#define DOCKER_ID %s\n", p.Conf.DockerID)
 	fmt.Fprintf(fw, "#define MAP_NAME %s\n", constructMapName(L1MapNamePrefix, p.Conf.DockerID))
 	fw.WriteString(common.FmtDefineAddress("CONTAINER_MAC", p.Conf.MAC))
-	fw.WriteString(common.FmtDefineAddress("CONTAINER_IP", p.Conf.IPv4))
-	// fmt.Fprintf(fw, "#define CONTAINER_IP %#x\n", binary.BigEndian.Uint32(p.Conf.IPv4))
+
+	/////////////
+	// EXAMPLE:
+	/////////////
+	// /*
+	//  * Docker Container ID: 4520cbcde6f2a15d02d456a20a761e7dba8c2b2242ccdf7621f30594dda42b26
+	//  * Map Name: ep_l1_4520cbcde6f2a15d02d456a20a761e7dba8c2b2242ccdf7621f30594dda42b26
+	//  * MAC:
+	//  * IPv4 address: 10.255.1.34
+	//  * Host Side MAC: 1e:0c:15:53:92:23
+	//  * Host Side Interface Index: '$'
+	//  */
+	// #define DOCKER_ID 4520cbcde6f2a15d02d456a20a761e7dba8c2b2242ccdf7621f30594dda42b26
+	// #define MAP_NAME ep_l1_4520cbcde6f2a15d02d456a20a761e7dba8c2b2242ccdf7621f30594dda42b26
+	// #define CONTAINER_MAC { .addr = {  } }
+	// #define CONTAINER_IP_ARRAY { .addr = { 0xa, 0xff, 0x1, 0x22 } }
+	// #define CONTAINER_IP_BIGENDIAN 0xaff0122
+	// #define CONTAINER_IP 0x2201ff0a
+	// #define CONTAINER_HOST_SIDE_MAC { .addr = { 0x1e, 0xc, 0x15, 0x53, 0x92, 0x23 } }
+	// #define CONTAINER_HOST_SIDE_IFC_IDX 36
+
+	fw.WriteString(common.FmtDefineAddress("CONTAINER_IP_ARRAY", p.Conf.IPv4[12:]))
+	fmt.Fprintf(fw, "#define CONTAINER_IP_BIGENDIAN %#x\n", binary.BigEndian.Uint32(p.Conf.IPv4[12:]))
+	fmt.Fprintf(fw, "#define CONTAINER_IP %#x\n", binary.LittleEndian.Uint32(p.Conf.IPv4[12:]))
+
 	fw.WriteString(common.FmtDefineAddress("CONTAINER_HOST_SIDE_MAC", p.Conf.HostSideMAC))
 	fmt.Fprintf(fw, "#define CONTAINER_HOST_SIDE_IFC_IDX %d\n", p.Conf.HostSideIfIndex)
 
@@ -150,7 +195,7 @@ func (p *L1Program) writeBPFHeader() error {
 	return fw.Flush()
 }
 
-func (p *L1Program) compileBase() error {
+func (p *L1Program) compileBase(userOpts string) error {
 	var args []string
 	var mode string
 	var ifName string
@@ -159,18 +204,16 @@ func (p *L1Program) compileBase() error {
 		return fmt.Errorf("Unable to create BPF header file: %s", err)
 	}
 
-	if p.Conf.HostSideIfIndex != 0 {
-		hostVeth, err := netlink.LinkByIndex(p.Conf.HostSideIfIndex)
-		if err != nil {
-			return fmt.Errorf("Error while fetching Link for veth index %v with MAC %s: %s", p.Conf.HostSideIfIndex, p.Conf.HostSideMAC, err)
-		}
-		ifName = hostVeth.Attrs().Name
-		mode = "direct"
-
-		args = []string{p.Conf.LibDir, p.Conf.RunDir, mode, ifName}
+	hostVeth, err := netlink.LinkByIndex(p.Conf.HostSideIfIndex)
+	if err != nil {
+		return fmt.Errorf("Error while fetching Link for veth index %v with MAC %s: %s", p.Conf.HostSideIfIndex, p.Conf.HostSideMAC, err)
 	}
+	ifName = hostVeth.Attrs().Name
+	mode = "direct"
 
-	//./init.sh /usr/lib/regulus /var/run/regulus direct eth1
+	args = []string{p.Conf.LibDir, p.Conf.RunDir, mode, ifName, userOpts}
+
+	//./init.sh /usr/lib/regulus /var/run/regulus direct eth1 ingress
 	out, err := exec.Command(filepath.Join(p.Conf.LibDir, L1BPFSrcDir+"/init.sh"), args...).CombinedOutput()
 	if err != nil {
 		fmt.Errorf("Command execution %s %s failed: %s : Command output:\n%s",
@@ -178,7 +221,6 @@ func (p *L1Program) compileBase() error {
 			strings.Join(args, " "), err, out)
 		return err
 	}
-
 	return nil
 }
 
@@ -215,12 +257,14 @@ func NewKey(ip net.IP) *L1MapKey {
 
 // TODO(awander): Must match 'struct lb4_service' in "bpf/lib/common.h"
 type L1MapValue struct {
-	Count uint16
+	TxCount uint16
+	RxCount uint16
 }
 
-func NewL1MapValue(count uint16) *L1MapValue {
+func NewL1MapValue(txcount, rxcount uint16) *L1MapValue {
 	l1 := L1MapValue{
-		Count: count, // load some initial count
+		TxCount: txcount,
+		RxCount: rxcount,
 	}
 	return &l1
 }
@@ -235,7 +279,8 @@ func (v *L1MapValue) Convert() *L1MapValue {
 }
 
 func (v *L1MapValue) String() string {
-	return fmt.Sprintf("%s", v.Count)
+	// TODO(awander): should make this JSON format
+	return fmt.Sprintf("%#x %#x", v.TxCount, v.RxCount)
 }
 
 func (p *L1Program) UpdateElement(k, v, mapID string) error {
@@ -255,7 +300,8 @@ func (p *L1Program) UpdateElement(k, v, mapID string) error {
 
 	l1key := NewKey(ip)
 	l1value := l1key.NewValue().(*L1MapValue)
-	l1value.Count = uint16(value)
+	l1value.TxCount = uint16(value)
+	l1value.RxCount = uint16(value)
 
 	if err = p.updateElement(l1key, l1value); err != nil {
 		return fmt.Errorf("Map update failed for key=%s: %s", ip, err)
@@ -293,18 +339,36 @@ func (p *L1Program) deleteElement(key *L1MapKey) error {
 	return p.Map.Delete(key.Convert())
 }
 
-// func (p *L1Program) LookupElement(key *L1MapKey) (*L1MapValue, error) {
-// 	var elem *L1MapValue
+func (p *L1Program) LookupElement(k, mapID string) (string, error) {
+	var ip net.IP
 
-// 	val, err := p.Map.Lookup(key.Convert())
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	ip = net.ParseIP(k)
+	if ip == nil {
+		return "", fmt.Errorf("Unable to parsekey: %v", k)
+	}
 
-// 	elem = val.(*L1MapValue)
+	l1key := NewKey(ip)
 
-// 	return elem.Convert(), nil
-// }
+	val, err := p.lookupElement(l1key)
+	if err != nil {
+		return "", fmt.Errorf("Map lookup failed for key=%s: %s", ip, err)
+	}
+	return val.String(), nil
+
+}
+
+func (p *L1Program) lookupElement(key *L1MapKey) (*L1MapValue, error) {
+	var elem *L1MapValue
+
+	val, err := p.Map.Lookup(key.Convert())
+	if err != nil {
+		return nil, err
+	}
+
+	elem = val.(*L1MapValue)
+
+	return elem.Convert(), nil
+}
 
 // Dump2String dumps the entire map object in string format
 // Note that input - mapID - is ignored since we only have a single map

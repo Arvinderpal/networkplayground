@@ -76,4 +76,5 @@ const (
 	PROGRAM_ARGS_MAP_ID          = "program-map-id"
 	PROGRAM_ARGS_MAP_KV_PAIR     = "program-kv-pair"
 	PROGRAM_ARGS_MAP_KEY         = "program-key"
+	PROGRAM_ARGS_USER_OPTIONS    = "program-user-opts"
 )

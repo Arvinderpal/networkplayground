@@ -3,7 +3,7 @@
 # Attach ingress direction:
 # ./init.sh /root/go/src/github.com/networkplayground/bpf /var/run/regulus direct eth1 ingress
 # Attach egress direction:
-# ./init.sh /root/go/src/github.com/networkplayground/bpf /var/run/regulus direct eth1 egress
+# ./init.sh /root/go/src/github.com/networkplayground/bpf /var/run/regulus direct eth1 ingress,egress
 
 # ./regulus daemon run -D /root/go/src/github.com/networkplayground/bpf --d eth1
 
@@ -65,15 +65,17 @@ if [ "$MODE" = "direct" ]; then
 	if [ -z "$NATIVE_DEV" ]; then
 		echo "No device specified for direct mode, ignoring..."
 	else
+		tc qdisc del dev $NATIVE_DEV clsact 2> /dev/null || true
+		tc qdisc add dev $NATIVE_DEV clsact
 		if [[ $DIRECTION == "egress" ]]; then
-
 			tc filter add dev $NATIVE_DEV egress bpf da obj $OBJ_OUT sec $SEC_NAME
-			# e.g. tc filter add dev eth1 ingress bpf da obj bpf_g3.o sec from-netdev			
-			#  do we need this?
-			sysctl -q -w net.ipv4.conf.$NATIVE_DEV.forwarding=1
+			sysctl -q -w net.ipv4.conf.$NATIVE_DEV.forwarding=1 #  do we need this?
+		elif [[ $DIRECTION == "ingress,egress" ]]; then
+			tc filter add dev $NATIVE_DEV ingress bpf da obj $OBJ_OUT sec $SEC_NAME
+			tc filter add dev $NATIVE_DEV egress bpf da obj $OBJ_OUT sec $SEC_NAME
+			# e.g. tc filter add dev eth1 ingress bpf da obj bpf_g3.o sec from-netdev
+			sysctl -q -w net.ipv4.conf.$NATIVE_DEV.forwarding=1 #  do we need this?
 		else
-			tc qdisc del dev $NATIVE_DEV clsact 2> /dev/null || true
-			tc qdisc add dev $NATIVE_DEV clsact
 			tc filter add dev $NATIVE_DEV ingress bpf da obj $OBJ_OUT sec $SEC_NAME
 		fi
 

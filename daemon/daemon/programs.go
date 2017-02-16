@@ -45,8 +45,11 @@ func (d *Daemon) StartProgram(dockerID string, args map[string]string) error {
 		return err
 	}
 
-	err = newProg.Start()
+	userOptions := args[common.PROGRAM_ARGS_USER_OPTIONS]
+
+	err = newProg.Start(userOptions)
 	if err != nil {
+		// TODO (awander): we need to cleanup the bpf.Map created in CreateProgram()
 		return err
 	}
 
@@ -63,6 +66,28 @@ func (d *Daemon) StopProgram(dockerID string, args map[string]string) error {
 	// if program exists, stop it
 
 	return nil
+}
+
+func (d *Daemon) LookupMapEntry(dockerID, progType, mapID, key string) (string, error) {
+	logger.Debugf("Lookingup Map entry for container %q ...", dockerID)
+
+	// look up ep associated with dockerID
+	ep := d.lookupRegulusEndPoint(dockerID)
+	if ep == nil {
+		return "", fmt.Errorf("Could not find endpoint associated with %s", dockerID)
+	}
+
+	prog := lookupProgram(ep, progType)
+	if prog == nil {
+		return "", fmt.Errorf("Program {%q} not found for container id {%q}", progType)
+	}
+
+	val, err := prog.LookupElement(key, mapID)
+	if err != nil {
+		return "", err
+	}
+
+	return val, nil
 }
 
 func (d *Daemon) UpdateMapEntry(dockerID string, args map[string]string) error {
@@ -146,7 +171,7 @@ func (d *Daemon) DumpMap2String(dockerID, progType, mapID string) (string, error
 	}
 
 	// NOTE: this assumes that the map is already open
-	dump, err := prog.Dump2String("")
+	dump, err := prog.Dump2String(mapID)
 	if err != nil {
 		return "", err
 	}

@@ -43,6 +43,7 @@ type programs interface {
 	StartProgram(dockerID string, args map[string]string) error
 	StopProgram(dockerID string, args map[string]string) error
 	// GetMapEntry(map[string]string) (string, error)
+	LookupMapEntry(dockerID, progType, mapID, key string) (string, error)
 	UpdateMapEntry(dockerID string, args map[string]string) error
 	DeleteMapEntry(dockerID string, args map[string]string) error
 	DumpMap2String(dockerID, progType, mapID string) (string, error)

@@ -63,13 +63,16 @@ func (r *Router) initBackendRoutes() {
 		},
 		// program map handlers
 		route{
+			"ProgramLookupMapEntry", "GET", "/programmap/{dockerID}/{progType}/{mapID}/{key}", r.programLookupMapEntry,
+		},
+		route{
 			"ProgramUpdateMapEntry", "POST", "/programmap/update/{dockerID}", r.programUpdateMapEntry,
 		},
 		route{
 			"ProgramDeleteMapEntry", "DELETE", "/programmap/{dockerID}", r.programDeleteMapEntry,
 		},
 		route{
-			"ProgramDumpMap2String", "GET", "/programmap/dump/{dockerID}/{progType}/{mapID}", r.programDumpMap2String,
+			"ProgramDumpMap2String", "GET", "/programmap-dump/{dockerID}/{progType}/{mapID}", r.programDumpMap2String,
 		},
 		// route{
 		// 	"ProgramGetMapEntry", "GET", "/programmap/{dockerID}", r.programMapGet,

@@ -173,6 +173,47 @@ func (router *Router) programStop(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (router *Router) programLookupMapEntry(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	dockerID, exists := vars["dockerID"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty docker id for lookup"))
+		return
+	}
+	progType, exists := vars["progType"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty program type for lookup"))
+		return
+	}
+	mapID, exists := vars["mapID"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty map ID for lookup"))
+		return
+	}
+	key, exists := vars["key"]
+	if !exists {
+		processServerError(w, r, errors.New("server received empty key for lookup"))
+		return
+	}
+
+	value, err := router.daemon.LookupMapEntry(dockerID, progType, mapID, key)
+	if err != nil {
+		processServerError(w, r, err)
+		return
+	}
+	if value == "" {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(value); err != nil {
+		processServerError(w, r, err)
+		return
+	}
+
+}
+
 func (router *Router) programUpdateMapEntry(w http.ResponseWriter, r *http.Request) {
 	var args map[string]string
 	vars := mux.Vars(r)
@@ -227,8 +268,6 @@ func (router *Router) programDumpMap2String(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	mapID, _ := vars["mapID"] // optional
-
-	logger.Debugf("programDumpMap2String: %q", dockerID)
 
 	dump, err := router.daemon.DumpMap2String(dockerID, progType, mapID)
 	if err != nil {
